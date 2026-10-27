@@ -1,7 +1,5 @@
-/**
- * Domain types shared by pages, components and the data layer.
- * Field names are UI-facing; the API integration maps backend DTOs onto them.
- */
+// domain types shared by pages, components and the data layer
+// field names are UI facing and will be mapped from backend DTOs during integration
 export type * from './user';
 export type * from './mentor';
 export type * from './session';

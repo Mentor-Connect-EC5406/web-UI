@@ -1,7 +1,6 @@
 import type { SessionStatus, SlotStatus } from '@/types';
 import type { BadgeTone } from '@/components/ui/Badge';
 
-/** status labelled and coloured  */
 export const sessionStatusMeta: Record<SessionStatus, { label: string; tone: BadgeTone }> = {
   PENDING: { label: 'Pending', tone: 'brand' },
   CONFIRMED: { label: 'Confirmed', tone: 'info' },

@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 
-/** Open/close state for dialogs, drawers and menus */
+// open and close state for dialogs drawers and menus
 export function useDisclosure(initial = false) {
   const [isOpen, setIsOpen] = useState(initial);
   const open = useCallback(() => setIsOpen(true), []);

@@ -2,12 +2,7 @@ import { MENTORS, MENTOR_SLOTS, REVIEWS } from '@/mocks/mentors';
 import { BOOKING_REQUESTS, GOALS, MENTOR_SESSIONS, STUDENT_SESSIONS } from '@/mocks/sessions';
 import { ADMIN_STATS, MENTOR_APPLICATIONS, REPORTS } from '@/mocks/admin';
 
-/**
- * Fake backend used until the real API is connected.
- * Holds an editable copy of the mock data so changes (cancel, accept, book…)
- * show up across pages until the browser is reloaded.
- * The API integration replaces the `api` objects in src/data/* and deletes this file.
- */
+// fake backend with mutable in-memory state until the real API replaces the api objects in src/data
 
 export const db = {
   mentors: structuredClone(MENTORS),
@@ -22,20 +17,19 @@ export const db = {
   adminStats: { ...ADMIN_STATS },
 };
 
-/** Simulated network delay so loading states are visible while designing */
+// long enough to see loading states while designing
 const LATENCY_MS = 600;
 
-/** Add `?mockError` to the URL to make every read fail and preview error states */
+// add ?mockError to the URL to force reads to fail and preview error states
 const shouldFail = () => new URLSearchParams(window.location.search).has('mockError');
 
-/** Resolve a read after the simulated delay (returns a copy, like a real response) */
+// returns a deep copy so mutations on the result do not corrupt the in-memory store
 export async function respond<T>(read: () => T): Promise<T> {
   await new Promise((resolve) => setTimeout(resolve, LATENCY_MS));
   if (shouldFail()) throw new Error('The server could not be reached.');
   return structuredClone(read());
 }
 
-/** Apply a change after the simulated delay */
 export async function mutate(change: () => void): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, LATENCY_MS));
   change();
