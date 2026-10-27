@@ -2,7 +2,7 @@ export type SlotStatus = 'AVAILABLE' | 'HELD' | 'BOOKED' | 'BLOCKED';
 
 export interface Slot {
   id: string;
-  /** ISO-8601 date-time */
+  // ISO-8601 date-time string
   startsAt: string;
   endsAt: string;
   status: SlotStatus;

@@ -1,6 +1,6 @@
 export type Role = 'STUDENT' | 'MENTOR' | 'ADMIN';
 
-/** Roles a person can pick for themselves after signing up. Admin accounts are not self-service. */
+// admin is excluded because those accounts are not self service
 export type OnboardingRole = Exclude<Role, 'ADMIN'>;
 
 export interface User {
@@ -11,7 +11,7 @@ export interface User {
   role: Role;
 }
 
-/** A person who has signed up with the identity provider but has not chosen a role yet */
+// a person who signed up but has not completed the onboarding role choice yet
 export interface NewAccount {
   name: string;
   email: string;
