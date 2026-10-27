@@ -1,6 +1,5 @@
-/** Reference lists for selects and filters. Static for now; may come from the API later. */
+// static reference lists for selects and filters, may come from the API later
 
-/** Hot job fields students search by. Also the industry of every mentor. */
 export const INDUSTRIES = [
   'Software Engineering',
   'Data Science & AI',

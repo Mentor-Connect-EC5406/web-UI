@@ -8,7 +8,7 @@ export interface Mentor {
   bio: string;
   skills: string[];
   experienceYears: number;
-  /** Price per session, in config CURRENCY */
+  // price per session in the app currency
   hourlyRate: number;
   rating: number;
   reviewCount: number;
@@ -25,7 +25,7 @@ export interface Review {
 
 export type MentorSort = 'rating' | 'price' | 'experience';
 
-/** Search criteria for the mentor list. Empty strings mean "any". */
+// search criteria for the mentor list, empty strings mean any
 export interface MentorFilterValues {
   query: string;
   industries: string[];
