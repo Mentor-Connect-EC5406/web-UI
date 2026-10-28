@@ -10,6 +10,8 @@ export const keys = {
   mentorSessions: ['sessions', 'mentor'] as const,
   bookingRequests: ['sessions', 'requests'] as const,
   goals: ['goals'] as const,
+  studentProfile: ['profile', 'student'] as const,
+  myMentorProfile: ['profile', 'mentor'] as const,
   adminStats: ['admin', 'stats'] as const,
   applications: ['admin', 'applications'] as const,
   reports: ['admin', 'reports'] as const,

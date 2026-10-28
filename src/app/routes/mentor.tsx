@@ -6,6 +6,7 @@ import type { RoleArea } from './types';
 
 const MentorDashboardPage = lazy(() => import('@/pages/mentor/MentorDashboardPage'));
 const AvailabilityPage = lazy(() => import('@/pages/mentor/AvailabilityPage'));
+const EditMentorProfilePage = lazy(() => import('@/pages/mentor/EditMentorProfilePage'));
 
 // order here determines sidebar position
 export const mentorArea: RoleArea = {
@@ -17,6 +18,6 @@ export const mentorArea: RoleArea = {
     { path: paths.mentorArea.availability, element: <AvailabilityPage />, nav: { label: 'Availability', icon: CalendarClock } },
     comingSoon(paths.mentorArea.students, 'Students', Users),
     comingSoon(paths.mentorArea.messages, 'Messages', MessageSquare),
-    comingSoon(paths.mentorArea.profile, 'Profile', User),
+    { path: paths.mentorArea.profile, element: <EditMentorProfilePage />, nav: { label: 'Profile', icon: User } },
   ],
 };

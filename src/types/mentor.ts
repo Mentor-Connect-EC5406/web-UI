@@ -33,3 +33,16 @@ export interface MentorFilterValues {
   maxRate: string;
   sort: MentorSort;
 }
+
+// fields a mentor edits on their own profile, rating and verification are not editable
+export interface MentorProfileUpdate {
+  firstName: string;
+  lastName: string;
+  title: string;
+  organization: string;
+  industry: string;
+  bio: string;
+  skills: string[];
+  experienceYears: number;
+  hourlyRate: number;
+}

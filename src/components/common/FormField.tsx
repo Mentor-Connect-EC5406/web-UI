@@ -8,11 +8,13 @@ interface FormFieldProps {
   required?: boolean;
   // inline error shown below the control
   error?: string;
+  // helper text shown below the control when there is no error
+  hint?: ReactNode;
   children: ReactNode;
 }
 
 // label above the control with an optional error message below
-export function FormField({ htmlFor, label, required, error, children }: FormFieldProps) {
+export function FormField({ htmlFor, label, required, error, hint, children }: FormFieldProps) {
   return (
     <div className="space-y-1.5">
       <Label htmlFor={htmlFor}>
@@ -20,7 +22,11 @@ export function FormField({ htmlFor, label, required, error, children }: FormFie
         {required && <span className="ml-0.5 text-accent" aria-hidden>*</span>}
       </Label>
       {children}
-      {error && <p className="text-xs text-accent">{error}</p>}
+      {error ? (
+        <p id={`${htmlFor}-error`} className="text-xs text-accent">{error}</p>
+      ) : (
+        hint && <p id={`${htmlFor}-hint`} className="text-xs text-ink-muted">{hint}</p>
+      )}
     </div>
   );
 }
