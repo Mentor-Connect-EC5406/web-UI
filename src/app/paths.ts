@@ -18,8 +18,10 @@ export const paths = {
     sessions: '/student/sessions',
     goals: '/student/goals',
     messages: '/student/messages',
+    conversation: (id: string) => `/student/messages?c=${encodeURIComponent(id)}`,
     saved: '/student/saved',
     profile: '/student/profile',
+    profilePreview: '/student/profile/preview',
   },
 
   mentorArea: {
@@ -28,6 +30,7 @@ export const paths = {
     availability: '/mentor/availability',
     students: '/mentor/students',
     messages: '/mentor/messages',
+    conversation: (id: string) => `/mentor/messages?c=${encodeURIComponent(id)}`,
     profile: '/mentor/profile',
   },
 

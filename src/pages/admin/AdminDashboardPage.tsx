@@ -10,9 +10,8 @@ import { PageHeader } from '@/components/common/PageHeader';
 import { PersonRow } from '@/components/common/PersonRow';
 import { StatCard } from '@/components/common/StatCard';
 import { useAdminStats, useMentorApplications, useReports } from '@/data/admin';
+import { reportStatusMeta } from '@/lib/status';
 import { paths } from '@/app/paths';
-
-const reportStatusLabel = { OPEN: 'Open', UNDER_REVIEW: 'Under review' } as const;
 
 // platform metrics and the queues that need admin action
 export default function AdminDashboardPage() {
@@ -59,22 +58,30 @@ export default function AdminDashboardPage() {
         </Card>
 
         <Card>
-          <CardHeader title={<><Flag className="size-4 text-ink-secondary" aria-hidden /> Open reports</>} />
+          <CardHeader
+            title={<><Flag className="size-4 text-ink-secondary" aria-hidden /> Open reports</>}
+            action={<Button asChild variant="ghost" size="sm"><Link to={paths.admin.reports}>Review all</Link></Button>}
+          />
           <CardBody>
             <AsyncContent query={reports} loading={<ListSkeleton rows={2} rowClassName="h-16" />}>
-              {(list) => (
-                <div className="space-y-3">
-                  {list.map((r) => (
-                    <div key={r.id} className="rounded-xl border border-line p-3">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="text-sm font-medium text-ink">{r.type}</p>
-                        <Badge tone={r.status === 'OPEN' ? 'accent' : 'brand'}>{reportStatusLabel[r.status]}</Badge>
+              {(all) => {
+                const list = all.filter((r) => r.status === 'OPEN' || r.status === 'UNDER_REVIEW');
+                return list.length === 0 ? (
+                  <p className="py-4 text-center text-sm text-ink-secondary">No open reports.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {list.map((r) => (
+                      <div key={r.id} className="rounded-xl border border-line p-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="text-sm font-medium text-ink">{r.type}</p>
+                          <Badge tone={reportStatusMeta[r.status].tone}>{reportStatusMeta[r.status].label}</Badge>
+                        </div>
+                        <p className="mt-0.5 text-xs text-ink-secondary">By {r.reporter} against {r.reportedUser}</p>
                       </div>
-                      <p className="mt-0.5 text-xs text-ink-secondary">By {r.reporter} against {r.reportedUser}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
+                    ))}
+                  </div>
+                );
+              }}
             </AsyncContent>
           </CardBody>
         </Card>

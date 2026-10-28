@@ -32,7 +32,8 @@ export function Select({ id, value, onValueChange, placeholder, options, classNa
         <SelectPrimitive.Content
           position="popper"
           sideOffset={4}
-          className="z-50 min-w-(--radix-select-trigger-width) overflow-hidden rounded-xl border border-line bg-surface shadow-lg"
+          // long lists like years scroll inside the menu instead of running off the screen
+          className="z-50 max-h-[min(20rem,var(--radix-select-content-available-height))] min-w-(--radix-select-trigger-width) overflow-hidden rounded-xl border border-line bg-surface shadow-lg"
         >
           <SelectPrimitive.Viewport className="p-1">
             {items.map((item) => (

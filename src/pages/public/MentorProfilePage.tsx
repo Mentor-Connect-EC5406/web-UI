@@ -1,5 +1,5 @@
 import { Link, useParams } from 'react-router-dom';
-import { Briefcase, UserX } from 'lucide-react';
+import { Briefcase, MapPin, UserX } from 'lucide-react';
 import type { Mentor } from '@/types';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
@@ -12,6 +12,8 @@ import { ListSkeleton } from '@/components/common/ListSkeleton';
 import { RatingStars } from '@/components/common/RatingStars';
 import { VerifiedBadge } from '@/components/common/VerifiedBadge';
 import { BookingPanel } from '@/components/booking/BookingPanel';
+import { LinkList } from '@/components/profile/ProfileLists';
+import { ProfileExtrasSections } from '@/components/profile/ProfileView';
 import { useSession } from '@/auth/session';
 import { useMentor, useMentorReviews, useMentorSlots } from '@/data/mentors';
 import { useBookSession } from '@/data/sessions';
@@ -31,9 +33,12 @@ function ProfileHeader({ mentor }: { mentor: Mentor }) {
           <h1 className="text-2xl font-semibold text-ink sm:text-3xl">{mentor.name}</h1>
           {mentor.isVerified && <VerifiedBadge />}
         </div>
-        <p className="mt-1 flex items-center gap-1.5 text-ink-secondary">
-          <Briefcase className="size-4" aria-hidden /> {mentor.title} · {mentor.organization}
+        {mentor.headline && <p className="mt-1 text-ink">{mentor.headline}</p>}
+        <p className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-ink-secondary">
+          <span className="flex items-center gap-1.5"><Briefcase className="size-4" aria-hidden /> {mentor.title} · {mentor.organization}</span>
+          {mentor.location && <span className="flex items-center gap-1.5 text-sm"><MapPin className="size-4" aria-hidden /> {mentor.location}</span>}
         </p>
+        <div className="mt-2"><LinkList links={mentor.links} /></div>
         <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
           <RatingStars rating={mentor.rating} reviewCount={mentor.reviewCount} size="md" />
           <span className="text-ink-secondary">{mentor.experienceYears} years experience</span>
@@ -101,10 +106,11 @@ export default function MentorProfilePage({ backPath }: MentorProfilePageProps) 
                     <TabsTrigger value="about">About</TabsTrigger>
                     <TabsTrigger value="reviews">Reviews</TabsTrigger>
                   </TabsList>
-                  <TabsContent value="about">
+                  <TabsContent value="about" className="space-y-6">
                     <Card className="p-6">
-                      <p className="text-sm leading-relaxed text-ink">{mentor.bio}</p>
+                      <p className="text-sm leading-relaxed whitespace-pre-line text-ink">{mentor.bio}</p>
                     </Card>
+                    <ProfileExtrasSections extras={mentor} />
                   </TabsContent>
                   <TabsContent value="reviews">
                     <Reviews mentorId={mentor.id} />

@@ -11,7 +11,8 @@ import { QuickLinks } from '@/components/common/QuickLinks';
 import { StatCard } from '@/components/common/StatCard';
 import { useSession } from '@/auth/session';
 import { useBookingRequests, useMentorSessions, useRespondToRequest } from '@/data/sessions';
-import { firstName, formatSessionTime, formatTime } from '@/lib/format';
+import { firstName, formatDate, formatSessionTime, formatTime } from '@/lib/format';
+import { isUpcoming, mentoredStudents } from '@/lib/sessions';
 import { paths } from '@/app/paths';
 
 // shows todays sessions and pending booking requests
@@ -20,42 +21,52 @@ export default function MentorDashboardPage() {
   const sessions = useMentorSessions();
   const requests = useBookingRequests();
   const respond = useRespondToRequest();
+  // the mock has no notion of today so upcoming sessions stand in for it
+  const upcoming = sessions.data?.filter(isUpcoming);
 
   return (
     <div className="space-y-6">
       <PageHeader
         title={`Good to see you, ${firstName(user?.name ?? 'there')}`}
-        description={sessions.data && `You have ${sessions.data.length} sessions today.`}
+        description={upcoming && `You have ${upcoming.length} upcoming ${upcoming.length === 1 ? 'session' : 'sessions'}.`}
         actions={<Button asChild><Link to={paths.mentorArea.availability}>Manage availability <ArrowRight /></Link></Button>}
       />
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard label="Sessions today" value={sessions.data?.length ?? '–'} icon={Calendar} />
+        <StatCard label="Upcoming sessions" value={upcoming?.length ?? '–'} icon={Calendar} />
         <StatCard label="Pending requests" value={requests.data?.length ?? '–'} icon={ClipboardList} />
-        <StatCard label="Students mentored" value={48} icon={Users} />
+        <StatCard label="Students mentored" value={sessions.data ? mentoredStudents(sessions.data).length : '–'} icon={Users} />
         <StatCard label="Average rating" value="4.8" icon={Star} />
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
           <Card>
-            <CardHeader title="Today's sessions" />
+            <CardHeader
+              title="Upcoming sessions"
+              action={<Button asChild variant="ghost" size="sm"><Link to={paths.mentorArea.sessions}>See all</Link></Button>}
+            />
             <CardBody>
               <AsyncContent query={sessions} loading={<ListSkeleton rows={2} rowClassName="h-16" />}>
-                {(list) => (
-                  <div className="space-y-3">
-                    {list.map((s) => (
-                      <PersonRow
-                        key={s.id}
-                        name={s.studentName}
-                        detail={`${s.topic} · ${formatTime(s.startsAt)}`}
-                        actions={s.meetingUrl && (
-                          <Button asChild size="sm"><a href={s.meetingUrl} target="_blank" rel="noreferrer">Join</a></Button>
-                        )}
-                      />
-                    ))}
-                  </div>
-                )}
+                {(all) => {
+                  const list = all.filter(isUpcoming);
+                  return list.length === 0 ? (
+                    <p className="py-4 text-center text-sm text-ink-secondary">No upcoming sessions.</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {list.map((s) => (
+                        <PersonRow
+                          key={s.id}
+                          name={s.studentName}
+                          detail={`${s.topic} · ${formatDate(s.startsAt)} · ${formatTime(s.startsAt)}`}
+                          actions={s.meetingUrl && (
+                            <Button asChild size="sm"><a href={s.meetingUrl} target="_blank" rel="noreferrer">Join</a></Button>
+                          )}
+                        />
+                      ))}
+                    </div>
+                  );
+                }}
               </AsyncContent>
             </CardBody>
           </Card>

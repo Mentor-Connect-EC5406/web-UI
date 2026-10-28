@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { Bookmark } from 'lucide-react';
 import type { Mentor } from '@/types';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
@@ -6,16 +7,21 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { RatingStars } from '@/components/common/RatingStars';
 import { VerifiedBadge } from '@/components/common/VerifiedBadge';
+import { cn } from '@/lib/cn';
 import { formatPrice } from '@/lib/format';
 
 interface MentorCardProps {
   mentor: Mentor;
   // differs between the public site and the student area
   profilePath: string;
+  // save toggle is shown only when onToggleSave is given e.g. in the student area
+  saved?: boolean;
+  savePending?: boolean;
+  onToggleSave?: (mentor: Mentor) => void;
 }
 
 // mentor summary card for discovery grids
-export function MentorCard({ mentor, profilePath }: MentorCardProps) {
+export function MentorCard({ mentor, profilePath, saved = false, savePending, onToggleSave }: MentorCardProps) {
   return (
     <Card className="flex flex-col p-5 transition-shadow duration-200 hover:shadow-md">
       <div className="flex items-start gap-4">
@@ -32,6 +38,20 @@ export function MentorCard({ mentor, profilePath }: MentorCardProps) {
             <RatingStars rating={mentor.rating} reviewCount={mentor.reviewCount} />
           </div>
         </div>
+        {onToggleSave && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="-mt-1 -mr-2 size-9"
+            aria-label={`Save ${mentor.name}`}
+            aria-pressed={saved}
+            title={saved ? 'Remove from saved mentors' : 'Save mentor'}
+            loading={savePending}
+            onClick={() => onToggleSave(mentor)}
+          >
+            {!savePending && <Bookmark className={cn(saved && 'fill-brand text-ink')} aria-hidden />}
+          </Button>
+        )}
       </div>
 
       <div className="mt-4 flex flex-wrap gap-1.5">

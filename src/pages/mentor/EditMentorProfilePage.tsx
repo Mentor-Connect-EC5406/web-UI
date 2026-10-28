@@ -14,7 +14,7 @@ export default function EditMentorProfilePage() {
   const update = useUpdateMyMentorProfile();
 
   return (
-    <div className="max-w-3xl">
+    <div className="max-w-6xl">
       <PageHeader title="Profile" description="What students see when they find and book you" />
       <AsyncContent query={mentor} loading={<ListSkeleton rows={4} rowClassName="h-48" />}>
         {(data) =>

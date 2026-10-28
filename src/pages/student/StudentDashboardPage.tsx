@@ -14,8 +14,9 @@ import { RatingStars } from '@/components/common/RatingStars';
 import { StatCard } from '@/components/common/StatCard';
 import { SessionCard } from '@/components/booking/SessionCard';
 import { useSession } from '@/auth/session';
-import { useMentors } from '@/data/mentors';
-import { useGoals, useStudentSessions } from '@/data/sessions';
+import { useGoals } from '@/data/goals';
+import { useMentors, useSavedMentors } from '@/data/mentors';
+import { useStudentSessions } from '@/data/sessions';
 import { firstName } from '@/lib/format';
 import { EMPTY_FILTERS } from '@/lib/mentorFilters';
 import { paths } from '@/app/paths';
@@ -28,6 +29,7 @@ export default function StudentDashboardPage() {
   const sessions = useStudentSessions();
   const goals = useGoals();
   const mentors = useMentors(EMPTY_FILTERS);
+  const saved = useSavedMentors();
   const upcoming = sessions.data?.filter(isUpcoming) ?? [];
 
   return (
@@ -44,7 +46,7 @@ export default function StudentDashboardPage() {
             <StatCard label="Upcoming sessions" value={upcoming.length} icon={Calendar} />
             <StatCard label="Completed sessions" value={list.filter((s) => s.status === 'COMPLETED').length} icon={CalendarCheck} />
             <StatCard label="Active goals" value={goals.data?.length ?? '–'} icon={Target} />
-            <StatCard label="Saved mentors" value={0} icon={Bookmark} />
+            <StatCard label="Saved mentors" value={saved.data?.length ?? '–'} icon={Bookmark} />
           </div>
         )}
       </AsyncContent>
@@ -72,10 +74,15 @@ export default function StudentDashboardPage() {
           </section>
 
           <Card>
-            <CardHeader title="Career goals" />
+            <CardHeader
+              title="Career goals"
+              action={<Button asChild variant="ghost" size="sm"><Link to={paths.student.goals}>Manage</Link></Button>}
+            />
             <CardBody>
               <AsyncContent query={goals} loading={<ListSkeleton rows={3} rowClassName="h-8" />}>
-                {(list) => (
+                {(list) => list.length === 0 ? (
+                  <p className="py-2 text-sm text-ink-secondary">No goals yet. Add one to track your progress.</p>
+                ) : (
                   <div className="space-y-4">
                     {list.map((goal) => (
                       <div key={goal.id}>

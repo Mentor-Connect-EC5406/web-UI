@@ -1,6 +1,9 @@
-import type { Mentor, Review, Slot } from '@/types';
+import type { Mentor, ProfileExtras, Review, Slot } from '@/types';
+import { MENTOR_EXTRAS, emptyExtras } from './profiles';
 
-export const MENTORS: Mentor[] = [
+type MentorBase = Omit<Mentor, keyof ProfileExtras>;
+
+const BASE_MENTORS: MentorBase[] = [
   {
     id: 'mentor-1', name: 'Nimal Silva', title: 'Senior Software Engineer', organization: 'WSO2',
     industry: 'Software Engineering', avatarUrl: null, experienceYears: 8, hourlyRate: 2500, rating: 4.8, reviewCount: 34,
@@ -39,6 +42,8 @@ export const MENTORS: Mentor[] = [
   },
 ];
 
+export const MENTORS: Mentor[] = BASE_MENTORS.map((m) => ({ ...emptyExtras(), ...MENTOR_EXTRAS[m.id], ...m }));
+
 export const findMentor = (id: string | undefined) => MENTORS.find((m) => m.id === id);
 
 export const REVIEWS: Review[] = [
@@ -54,3 +59,6 @@ export const MENTOR_SLOTS: Slot[] = [
   { id: 's5', startsAt: '2026-11-05T10:00:00+05:30', endsAt: '2026-11-05T11:00:00+05:30', status: 'HELD' },
   { id: 's6', startsAt: '2026-11-05T15:00:00+05:30', endsAt: '2026-11-05T16:00:00+05:30', status: 'BLOCKED' },
 ];
+
+// mentors the demo student has bookmarked
+export const SAVED_MENTOR_IDS = ['mentor-3', 'mentor-4'];

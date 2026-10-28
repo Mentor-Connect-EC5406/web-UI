@@ -1,48 +1,73 @@
 import type { ReactNode } from 'react';
-import { Avatar } from '@/components/ui/Avatar';
+import { MapPin, Plus } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Progress } from '@/components/ui/Progress';
+import type { ProfileField } from '@/lib/profile';
 
 interface ProfileSummaryCardProps {
+  // photo picker on edit pages
+  photo: ReactNode;
   name: string;
-  email: string;
-  avatarUrl: string | null;
-  subtitle?: ReactNode;
-  // e.g. verification status or rating
+  headline?: string;
+  location?: string;
+  email?: string;
+  // e.g. verification status or open to opportunities
   badges?: ReactNode;
-  // e.g. a link to the public profile
-  action?: ReactNode;
-  progress: { percent: number; missing: string[] };
+  // e.g. preview and copy link buttons
+  actions?: ReactNode;
+  progress: { percent: number; missing: ProfileField[] };
 }
 
-// identity block at the top of a profile page with a completeness meter
-export function ProfileSummaryCard({ name, email, avatarUrl, subtitle, badges, action, progress }: ProfileSummaryCardProps) {
+function jumpTo(section?: string) {
+  const target = section && document.getElementById(section);
+  if (!target) return;
+  target.scrollIntoView({ block: 'start' });
+  // move keyboard focus to the first control in that section
+  target.querySelector<HTMLElement>('input, textarea, button')?.focus({ preventScroll: true });
+}
+
+// identity block on profile pages with a completeness checklist that jumps to each missing section
+export function ProfileSummaryCard({ photo, name, headline, location, email, badges, actions, progress }: ProfileSummaryCardProps) {
   return (
     <Card className="p-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-        <Avatar name={name} src={avatarUrl} size="xl" />
-        <div className="min-w-0 flex-1 space-y-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="text-lg font-semibold text-ink">{name}</p>
-            {badges}
-          </div>
-          {subtitle && <p className="text-sm text-ink-secondary">{subtitle}</p>}
-          <p className="truncate text-sm text-ink-muted">{email}</p>
-        </div>
-        {action}
+      {photo}
+      <div className="mt-4 space-y-1 text-center">
+        <p className="text-lg font-semibold break-words text-ink">{name}</p>
+        {badges && <div className="flex flex-wrap justify-center gap-1.5">{badges}</div>}
+        {headline && <p className="text-sm break-words text-ink-secondary">{headline}</p>}
+        {location && (
+          <p className="flex items-center justify-center gap-1 text-sm text-ink-muted">
+            <MapPin className="size-3.5" aria-hidden /> {location}
+          </p>
+        )}
+        {email && <p className="truncate text-sm text-ink-muted">{email}</p>}
       </div>
+
+      {actions && <div className="mt-4 space-y-2">{actions}</div>}
 
       <div className="mt-5 border-t border-line pt-5">
         <div className="mb-2 flex items-center justify-between text-sm">
-          <span className="font-medium text-ink">Profile completeness</span>
+          <span className="font-medium text-ink">Profile strength</span>
           <span className="text-ink-secondary">{progress.percent}%</span>
         </div>
-        <Progress value={progress.percent} label="Profile completeness" />
-        <p className="mt-2 text-xs text-ink-secondary">
-          {progress.missing.length > 0
-            ? `Still to add: ${progress.missing.join(', ')}.`
-            : 'Your profile is complete.'}
-        </p>
+        <Progress value={progress.percent} label="Profile strength" />
+        {progress.missing.length > 0 ? (
+          <ul className="mt-3 space-y-1">
+            {progress.missing.map((field) => (
+              <li key={field.label}>
+                <button
+                  type="button"
+                  onClick={() => jumpTo(field.section)}
+                  className="flex items-center gap-1.5 text-sm text-info hover:underline"
+                >
+                  <Plus className="size-3.5" aria-hidden /> Add {field.label}
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-2 text-xs text-ink-secondary">Your profile is complete.</p>
+        )}
       </div>
     </Card>
   );

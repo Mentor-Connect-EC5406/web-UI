@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { SearchX, SlidersHorizontal } from 'lucide-react';
-import type { MentorFilterValues, MentorSort } from '@/types';
+import type { Mentor, MentorFilterValues, MentorSort } from '@/types';
 import { Card } from '@/components/ui/Card';
 import { Select } from '@/components/ui/Select';
 import { AsyncContent } from '@/components/common/AsyncContent';
@@ -18,10 +18,14 @@ import { EMPTY_FILTERS, SORT_OPTIONS } from '@/lib/mentorFilters';
 interface MentorsPageProps {
   // differs between the public site and the student area
   profilePath: (id: string) => string;
+  // saving is offered only to signed in students, the public page passes none of these
+  savedIds?: ReadonlySet<string>;
+  pendingSaveId?: string | null;
+  onToggleSave?: (mentor: Mentor) => void;
 }
 
 // mentor discovery with search, filters and sort
-export default function MentorsPage({ profilePath }: MentorsPageProps) {
+export default function MentorsPage({ profilePath, savedIds, pendingSaveId, onToggleSave }: MentorsPageProps) {
   const [params] = useSearchParams();
   const [filters, setFilters] = useState<MentorFilterValues>(() => ({
     ...EMPTY_FILTERS,
@@ -73,7 +77,14 @@ export default function MentorsPage({ profilePath }: MentorsPageProps) {
               ) : (
                 <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
                   {list.map((mentor) => (
-                    <MentorCard key={mentor.id} mentor={mentor} profilePath={profilePath(mentor.id)} />
+                    <MentorCard
+                      key={mentor.id}
+                      mentor={mentor}
+                      profilePath={profilePath(mentor.id)}
+                      saved={savedIds?.has(mentor.id)}
+                      savePending={pendingSaveId === mentor.id}
+                      onToggleSave={onToggleSave}
+                    />
                   ))}
                 </div>
               )

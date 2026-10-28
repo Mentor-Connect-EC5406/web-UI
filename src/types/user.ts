@@ -1,3 +1,5 @@
+import type { ProfileExtras, ProfileVisibility, WorkPreferences } from './profile';
+
 export type Role = 'STUDENT' | 'MENTOR' | 'ADMIN';
 
 // admin is excluded because those accounts are not self service
@@ -18,7 +20,7 @@ export interface NewAccount {
 }
 
 // what a student keeps on their profile, mentors see it when a session is booked
-export interface StudentProfile {
+export interface StudentProfile extends ProfileExtras {
   firstName: string;
   lastName: string;
   email: string;
@@ -29,6 +31,11 @@ export interface StudentProfile {
   academicYear: string;
   // job fields from config options the student wants guidance in
   interests: string[];
+  // data url in the mock until real uploads exist
+  avatarUrl: string | null;
+  skills: string[];
+  workPreferences: WorkPreferences;
+  visibility: ProfileVisibility;
 }
 
 // email comes from the sign in account so it is not editable here
