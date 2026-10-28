@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { Mentor, MentorFilterValues, MentorSort } from '@/types';
+import type { Mentor, MentorFilterValues, MentorProfileUpdate, MentorSort } from '@/types';
 import { db, mutate, respond } from './mockServer';
 import { keys } from './keys';
 
@@ -25,6 +25,15 @@ export const mentorsApi = {
   reviews: (_mentorId: string) => respond(() => db.reviews),
   slots: (_mentorId: string) => respond(() => db.slots),
   removeSlot: (slotId: string) => mutate(() => { db.slots = db.slots.filter((s) => s.id !== slotId); }),
+
+  // the signed in mentor's own record, null if it has not been created yet
+  mine: () => respond(() => db.mentors.find((m) => m.id === db.myMentorId) ?? null),
+  updateMine: ({ firstName, lastName, ...details }: MentorProfileUpdate) =>
+    mutate(() => {
+      db.mentors = db.mentors.map((m) =>
+        m.id === db.myMentorId ? { ...m, ...structuredClone(details), name: `${firstName} ${lastName}`.trim() } : m,
+      );
+    }),
 };
 
 export const useMentors = (filters: MentorFilterValues) =>
@@ -44,5 +53,21 @@ export function useRemoveSlot() {
   return useMutation({
     mutationFn: mentorsApi.removeSlot,
     onSuccess: () => client.invalidateQueries({ queryKey: ['slots'] }),
+  });
+}
+
+export const useMyMentorProfile = () => useQuery({ queryKey: keys.myMentorProfile, queryFn: mentorsApi.mine });
+
+export function useUpdateMyMentorProfile() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: mentorsApi.updateMine,
+    // the public list and profile pages show the same record so they refresh too
+    onSuccess: () =>
+      Promise.all([
+        client.invalidateQueries({ queryKey: keys.myMentorProfile }),
+        client.invalidateQueries({ queryKey: ['mentors'] }),
+        client.invalidateQueries({ queryKey: ['mentor'] }),
+      ]),
   });
 }

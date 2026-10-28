@@ -1,4 +1,4 @@
-import type { NewAccount, Role, User } from '@/types';
+import type { NewAccount, Role, StudentProfile, User } from '@/types';
 
 /** One demo account per role, used by the demo sign-in */
 export const DEMO_USERS: Record<Role, User> = {
@@ -9,3 +9,16 @@ export const DEMO_USERS: Record<Role, User> = {
 
 /** Identity the demo sign-up pretends the identity provider returned */
 export const DEMO_NEW_ACCOUNT: NewAccount = { name: 'Kasun Fernando', email: 'kasun@example.com' };
+
+// profile of the demo student, phone is left empty so the completeness hint has something to show
+export const STUDENT_PROFILE: StudentProfile = {
+  firstName: 'Ashan',
+  lastName: 'Perera',
+  email: 'ashan@university.lk',
+  phone: '',
+  bio: 'Third year computer science student interested in frontend engineering and product design.',
+  university: 'University of Moratuwa',
+  degree: 'BSc Computer Science & Engineering',
+  academicYear: '3rd year',
+  interests: ['Software Engineering', 'UX/UI Design'],
+};

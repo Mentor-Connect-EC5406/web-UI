@@ -38,4 +38,15 @@ describe('mentorsApi.search (mock)', () => {
   it('returns null for an unknown mentor id', async () => {
     expect(await run(mentorsApi.get('nope'))).toBeNull();
   });
+
+  it('saves profile edits so the public profile shows them', async () => {
+    const mine = await run(mentorsApi.mine());
+    expect(mine?.id).toBe('mentor-1');
+    await run(mentorsApi.updateMine({
+      firstName: 'Nimal', lastName: 'Silva Perera', title: 'Staff Engineer', organization: 'WSO2',
+      industry: 'Software Engineering', bio: 'Updated bio', skills: ['React'], experienceYears: 9, hourlyRate: 3000,
+    }));
+    const updated = await run(mentorsApi.get('mentor-1'));
+    expect(updated).toMatchObject({ name: 'Nimal Silva Perera', title: 'Staff Engineer', hourlyRate: 3000, rating: 4.8 });
+  });
 });

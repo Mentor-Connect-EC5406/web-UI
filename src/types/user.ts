@@ -16,3 +16,20 @@ export interface NewAccount {
   name: string;
   email: string;
 }
+
+// what a student keeps on their profile, mentors see it when a session is booked
+export interface StudentProfile {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  bio: string;
+  university: string;
+  degree: string;
+  academicYear: string;
+  // job fields from config options the student wants guidance in
+  interests: string[];
+}
+
+// email comes from the sign in account so it is not editable here
+export type StudentProfileUpdate = Omit<StudentProfile, 'email'>;

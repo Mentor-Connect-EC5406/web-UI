@@ -1,6 +1,7 @@
 import { MENTORS, MENTOR_SLOTS, REVIEWS } from '@/mocks/mentors';
 import { BOOKING_REQUESTS, GOALS, MENTOR_SESSIONS, STUDENT_SESSIONS } from '@/mocks/sessions';
 import { ADMIN_STATS, MENTOR_APPLICATIONS, REPORTS } from '@/mocks/admin';
+import { DEMO_USERS, STUDENT_PROFILE } from '@/mocks/users';
 
 // fake backend with mutable in-memory state until the real API replaces the api objects in src/data
 
@@ -15,6 +16,9 @@ export const db = {
   applications: structuredClone(MENTOR_APPLICATIONS),
   reports: structuredClone(REPORTS),
   adminStats: { ...ADMIN_STATS },
+  studentProfile: structuredClone(STUDENT_PROFILE),
+  // the demo mentor account owns this record in the mentor list
+  myMentorId: DEMO_USERS.MENTOR.id,
 };
 
 // long enough to see loading states while designing
