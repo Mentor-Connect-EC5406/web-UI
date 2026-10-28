@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { ErrorState } from './ErrorState';
 import { LoadingState } from './LoadingState';
 
-interface QueryLike<T> {
+export interface QueryLike<T> {
   data: T | undefined;
   isPending: boolean;
   error: Error | null;

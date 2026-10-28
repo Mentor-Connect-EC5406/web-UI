@@ -1,5 +1,6 @@
 import { AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { cn } from '@/lib/cn';
 
 export type SaveStatus = 'saved' | 'error' | null;
 
@@ -10,10 +11,15 @@ interface FormActionsProps {
   onDiscard: () => void;
 }
 
-// save and discard buttons with the result of the last save
+// save and discard bar, it sticks to the bottom while there is something to save because the profile pages are long
 export function FormActions({ dirty, saving, status, onDiscard }: FormActionsProps) {
   return (
-    <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div
+      className={cn(
+        'flex flex-col-reverse gap-3 rounded-2xl sm:flex-row sm:items-center sm:justify-between',
+        (dirty || saving) && 'sticky bottom-4 z-10 border border-line bg-surface p-4 shadow-lg',
+      )}
+    >
       <p role="status" className="text-sm">
         {status === 'saved' && (
           <span className="flex items-center gap-1.5 text-success">

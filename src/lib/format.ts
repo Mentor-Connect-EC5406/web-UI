@@ -1,4 +1,4 @@
-import { format, parseISO } from 'date-fns';
+import { format, isSameDay, parseISO } from 'date-fns';
 import { CURRENCY, SESSION_LENGTH_MINUTES } from '@/config/constants';
 
 // output example "Mon, 3 Nov 2026"
@@ -34,3 +34,13 @@ export const initials = (name: string) =>
 
 // "Nimal Silva" becomes "Nimal"
 export const firstName = (name: string) => name.split(' ')[0];
+
+// time for today, otherwise the date e.g. "9:15 AM" or "27 Oct"
+export function formatMessageTime(iso: string, now: Date = new Date()) {
+  const date = parseISO(iso);
+  if (isSameDay(date, now)) return format(date, 'h:mm a');
+  return format(date, date.getFullYear() === now.getFullYear() ? 'd MMM' : 'd MMM yyyy');
+}
+
+// output example "27 Oct, 9:15 AM"
+export const formatDateTime = (iso: string) => format(parseISO(iso), 'd MMM, h:mm a');

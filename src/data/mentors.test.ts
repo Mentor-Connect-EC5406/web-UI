@@ -43,10 +43,13 @@ describe('mentorsApi.search (mock)', () => {
     const mine = await run(mentorsApi.mine());
     expect(mine?.id).toBe('mentor-1');
     await run(mentorsApi.updateMine({
-      firstName: 'Nimal', lastName: 'Silva Perera', title: 'Staff Engineer', organization: 'WSO2',
-      industry: 'Software Engineering', bio: 'Updated bio', skills: ['React'], experienceYears: 9, hourlyRate: 3000,
+      ...mine!,
+      firstName: 'Nimal', lastName: 'Silva Perera', title: 'Staff Engineer', hourlyRate: 3000,
+      certificates: [{ id: 'c1', name: 'CKA', issuer: 'CNCF', issuedMonth: '2025-05', credentialUrl: '' }],
     }));
     const updated = await run(mentorsApi.get('mentor-1'));
     expect(updated).toMatchObject({ name: 'Nimal Silva Perera', title: 'Staff Engineer', hourlyRate: 3000, rating: 4.8 });
+    expect(updated?.certificates.map((c) => c.name)).toEqual(['CKA']);
+    expect(updated?.experience.length).toBeGreaterThan(0);
   });
 });

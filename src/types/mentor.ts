@@ -1,4 +1,6 @@
-export interface Mentor {
+import type { ProfileExtras } from './profile';
+
+export interface Mentor extends ProfileExtras {
   id: string;
   name: string;
   title: string;
@@ -35,7 +37,7 @@ export interface MentorFilterValues {
 }
 
 // fields a mentor edits on their own profile, rating and verification are not editable
-export interface MentorProfileUpdate {
+export interface MentorProfileUpdate extends ProfileExtras {
   firstName: string;
   lastName: string;
   title: string;
@@ -45,4 +47,5 @@ export interface MentorProfileUpdate {
   skills: string[];
   experienceYears: number;
   hourlyRate: number;
+  avatarUrl: string | null;
 }

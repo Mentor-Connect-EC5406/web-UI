@@ -1,4 +1,4 @@
-import type { SessionStatus, SlotStatus } from '@/types';
+import type { AccountStatus, ReportStatus, SessionStatus, SlotStatus } from '@/types';
 import type { BadgeTone } from '@/components/ui/Badge';
 
 export const sessionStatusMeta: Record<SessionStatus, { label: string; tone: BadgeTone }> = {
@@ -13,4 +13,16 @@ export const slotStatusMeta: Record<SlotStatus, { label: string; className: stri
   HELD: { label: 'On hold', className: 'border-line bg-brand-soft text-ink-secondary' },
   BOOKED: { label: 'Booked', className: 'border-line bg-surface-muted text-ink-muted' },
   BLOCKED: { label: 'Blocked', className: 'border-line bg-surface-subtle text-ink-muted' },
+};
+
+export const reportStatusMeta: Record<ReportStatus, { label: string; tone: BadgeTone }> = {
+  OPEN: { label: 'Open', tone: 'accent' },
+  UNDER_REVIEW: { label: 'Under review', tone: 'brand' },
+  RESOLVED: { label: 'Resolved', tone: 'success' },
+  DISMISSED: { label: 'Dismissed', tone: 'neutral' },
+};
+
+export const accountStatusMeta: Record<AccountStatus, { label: string; tone: BadgeTone }> = {
+  ACTIVE: { label: 'Active', tone: 'success' },
+  SUSPENDED: { label: 'Suspended', tone: 'accent' },
 };

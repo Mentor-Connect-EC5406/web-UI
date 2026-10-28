@@ -4,3 +4,5 @@ export type * from './user';
 export type * from './mentor';
 export type * from './session';
 export type * from './admin';
+export type * from './message';
+export type * from './profile';

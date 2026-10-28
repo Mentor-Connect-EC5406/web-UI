@@ -1,6 +1,8 @@
-import { MENTORS, MENTOR_SLOTS, REVIEWS } from '@/mocks/mentors';
+import type { Review } from '@/types';
+import { MENTORS, MENTOR_SLOTS, REVIEWS, SAVED_MENTOR_IDS } from '@/mocks/mentors';
+import { CONVERSATIONS, MESSAGE_CONTACTS } from '@/mocks/messages';
 import { BOOKING_REQUESTS, GOALS, MENTOR_SESSIONS, STUDENT_SESSIONS } from '@/mocks/sessions';
-import { ADMIN_STATS, MENTOR_APPLICATIONS, REPORTS } from '@/mocks/admin';
+import { ADMIN_STATS, MANAGED_USERS, MENTOR_APPLICATIONS, REPORTS } from '@/mocks/admin';
 import { DEMO_USERS, STUDENT_PROFILE } from '@/mocks/users';
 
 // fake backend with mutable in-memory state until the real API replaces the api objects in src/data
@@ -15,6 +17,12 @@ export const db = {
   goals: structuredClone(GOALS),
   applications: structuredClone(MENTOR_APPLICATIONS),
   reports: structuredClone(REPORTS),
+  users: structuredClone(MANAGED_USERS),
+  savedMentorIds: [...SAVED_MENTOR_IDS],
+  // reviews written in this session per mentor, shown before the sample reviews
+  newReviews: {} as Record<string, Review[]>,
+  conversations: structuredClone(CONVERSATIONS),
+  contacts: structuredClone(MESSAGE_CONTACTS),
   adminStats: { ...ADMIN_STATS },
   studentProfile: structuredClone(STUDENT_PROFILE),
   // the demo mentor account owns this record in the mentor list

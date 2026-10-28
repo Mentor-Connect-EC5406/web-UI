@@ -15,4 +15,8 @@ export const keys = {
   adminStats: ['admin', 'stats'] as const,
   applications: ['admin', 'applications'] as const,
   reports: ['admin', 'reports'] as const,
+  users: ['admin', 'users'] as const,
+  savedMentors: ['savedMentors'] as const,
+  conversations: (userId: string) => ['conversations', userId] as const,
+  messages: (conversationId: string) => ['messages', conversationId] as const,
 };
