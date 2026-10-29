@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import type { OnboardingRole } from '@/types';
 import { Button } from '@/components/ui/Button';
@@ -15,8 +15,10 @@ export default function OnboardingPage() {
   const user = useSession((s) => s.user);
   const newAccount = useSession((s) => s.newAccount);
   const completeOnboarding = useSession((s) => s.completeOnboarding);
-  const [role, setRole] = useState<OnboardingRole>('STUDENT');
-  const [step, setStep] = useState<'role' | 'details'>('role');
+  const [searchParams] = useSearchParams();
+  const isMentorParam = searchParams.get('role') === 'mentor';
+  const [role, setRole] = useState<OnboardingRole>(isMentorParam ? 'MENTOR' : 'STUDENT');
+  const [step, setStep] = useState<'role' | 'details'>(isMentorParam ? 'details' : 'role');
 
   if (user) return <Navigate to={homePathFor(user.role)} replace />;
   if (!newAccount) return <Navigate to={paths.login} replace />;

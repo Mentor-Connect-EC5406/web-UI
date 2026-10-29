@@ -1,86 +1,56 @@
-import { useState, type FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Check } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
-import { SearchInput } from '@/components/common/SearchInput';
 import { INDUSTRIES } from '@/config/options';
+import { useInView } from '@/hooks/useInView';
 import { cn } from '@/lib/cn';
-import { paths } from '@/app/paths';
 import { LandingSection } from './LandingSection';
 
 /**
- * Find a mentor from the home page: type keywords, pick one or more job
- * fields, then continue to the results (Find mentors page applies both).
+ * Explore mentors by industry field from the home page.
+ * Displays 20 non-clickable category pills arranged in 5 per row across 4 lines.
+ * Features a 50% opacity premium gray background and bidirectional left/right converging entrance transition.
  */
 export function MentorSearchSection() {
-  const navigate = useNavigate();
-  const [query, setQuery] = useState('');
-  const [fields, setFields] = useState<string[]>([]);
-
-  const toggleField = (field: string) =>
-    setFields((current) => (current.includes(field) ? current.filter((f) => f !== field) : [...current, field]));
-
-  function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    const params = new URLSearchParams();
-    if (query.trim()) params.set('q', query.trim());
-    fields.forEach((field) => params.append('industry', field));
-    const search = params.toString();
-    navigate(search ? `${paths.mentors}?${search}` : paths.mentors);
-  }
+  const { ref, isInView } = useInView({ threshold: 0.15 });
 
   return (
     <LandingSection
-      id="find-mentor"
+      id="industries"
       title="Find the mentor for your field"
-      subtitle="Search by name, skill or company, and pick one or more job fields you are interested in."
+      subtitle="Explore top industries and connect with experts who match your career goals."
+      className="overflow-hidden pt-10 sm:pt-16 lg:pt-20 pb-10 sm:pb-16 lg:pb-20 scroll-mt-16"
     >
-      <form onSubmit={handleSubmit} className="mx-auto max-w-4xl">
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <SearchInput
-            label="Search mentors"
-            placeholder="Try “React”, “data analyst” or a company name"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            containerClassName="flex-1"
-            className="h-12"
-          />
-          <Button type="submit" size="lg">
-            {fields.length > 0 ? `Search ${fields.length} ${fields.length === 1 ? 'field' : 'fields'}` : 'Search mentors'}
-          </Button>
-        </div>
+      <div ref={ref} className="mx-auto max-w-6xl">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-3.5 md:grid-cols-4 lg:grid-cols-5">
+          {INDUSTRIES.map((field, index) => {
+            const col = index % 5;
+            const row = Math.floor(index / 5);
 
-        <fieldset className="mt-6">
-          <legend className="mb-3 flex w-full items-center justify-between text-sm font-medium text-ink">
-            <span>Hot job fields</span>
-            {fields.length > 0 && (
-              <button type="button" onClick={() => setFields([])} className="text-ink-secondary underline-offset-4 hover:text-ink hover:underline">
-                Clear selection
-              </button>
-            )}
-          </legend>
-          <div className="flex flex-wrap gap-2">
-            {INDUSTRIES.map((field) => {
-              const selected = fields.includes(field);
-              return (
-                <button
-                  key={field}
-                  type="button"
-                  aria-pressed={selected}
-                  onClick={() => toggleField(field)}
-                  className={cn(
-                    'inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium transition-colors',
-                    selected ? 'border-brand bg-brand-soft text-ink' : 'border-line bg-surface text-ink-secondary hover:border-line-strong hover:text-ink',
-                  )}
-                >
-                  {selected && <Check className="size-3.5" aria-hidden />}
-                  {field}
-                </button>
-              );
-            })}
-          </div>
-        </fieldset>
-      </form>
+            // Left side categories come from the left; right side categories come from the right
+            const isLeft = col < 2;
+            const isCenter = col === 2;
+
+            const initialTransform = isLeft
+              ? '-translate-x-16 sm:-translate-x-24 opacity-0'
+              : isCenter
+                ? 'translate-y-8 scale-95 opacity-0'
+                : 'translate-x-16 sm:translate-x-24 opacity-0';
+
+            return (
+              <div
+                key={field}
+                className={cn(
+                  'flex items-center justify-center rounded-full border border-gray-200/80 bg-[#f0f2f5]/50 px-3.5 py-2.5 text-center text-xs font-semibold text-ink shadow-2xs backdrop-blur-xs transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] sm:text-sm select-none',
+                  isInView ? 'translate-x-0 translate-y-0 scale-100 opacity-100' : initialTransform
+                )}
+                style={{
+                  transitionDelay: `${row * 90 + (isLeft ? col * 70 : isCenter ? 120 : (4 - col) * 70)}ms`,
+                }}
+              >
+                {field}
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </LandingSection>
   );
 }

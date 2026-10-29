@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { useSession } from '@/auth/session';
@@ -8,22 +8,30 @@ import { paths } from '@/app/paths';
 export default function SignupPage() {
   const signUp = useSession((s) => s.signUp);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isMentor = searchParams.get('role') === 'mentor';
 
   function handleSignUp() {
     signUp();
-    navigate(paths.onboarding);
+    navigate(isMentor ? `${paths.onboarding}?role=mentor` : paths.onboarding);
   }
 
   return (
     <Card className="p-8">
       <div className="mb-8 text-center">
-        <h1 className="text-2xl font-semibold text-ink">Join MentorConnect</h1>
+        <h1 className="text-2xl font-semibold text-ink">
+          {isMentor ? 'Mentor Registration' : 'Join MentorConnect'}
+        </h1>
         <p className="mt-1 text-sm text-ink-secondary">
-          Create your account in a minute. You'll tell us if you're a student or a mentor next.
+          {isMentor
+            ? 'Create your mentor account to start sharing your expertise and shaping student careers.'
+            : "Create your account in a minute. You'll tell us if you're a student or a mentor next."}
         </p>
       </div>
 
-      <Button size="lg" className="w-full" onClick={handleSignUp}>Sign up</Button>
+      <Button size="lg" className="w-full" onClick={handleSignUp}>
+        {isMentor ? 'Register as a mentor' : 'Sign up'}
+      </Button>
       <p className="mt-3 text-center text-xs text-ink-muted">Secure sign-up with Asgardeo</p>
 
       <p className="mt-8 text-center text-sm text-ink-secondary">

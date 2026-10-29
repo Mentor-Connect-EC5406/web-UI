@@ -8,6 +8,7 @@ export const paths = {
   mentor: (id: string) => `/mentors/${id}`,
   login: '/login',
   signup: '/signup',
+  mentorRegistration: '/register/mentor',
   onboarding: '/onboarding',
   forbidden: '/403',
 
