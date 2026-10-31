@@ -12,3 +12,29 @@ export const createItem = async <T, R>(endpoint: string, data: T): Promise<R> =>
     throw new Error(error.response?.data?.message || 'Failed to create resource. Please try again.');
   }
 };
+
+/**
+ * Generic Update (PUT) API Service Function
+ * Sends PUT request to fully update an existing resource on the server.
+ */
+export const updateItem = async <T, R>(endpoint: string, data: T): Promise<R> => {
+  try {
+    const response = await apiClient.put<R>(endpoint, data);
+    return response;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to update resource. Please try again.');
+  }
+};
+
+/**
+ * Generic Partial Update (PATCH) API Service Function
+ * Sends PATCH request to partially update an existing resource on the server.
+ */
+export const patchItem = async <T, R>(endpoint: string, data: T): Promise<R> => {
+  try {
+    const response = await apiClient.patch<R>(endpoint, data);
+    return response;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to partially update resource. Please try again.');
+  }
+};
