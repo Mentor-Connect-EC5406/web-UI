@@ -38,3 +38,16 @@ export const patchItem = async <T, R>(endpoint: string, data: T): Promise<R> => 
     throw new Error(error.response?.data?.message || 'Failed to partially update resource. Please try again.');
   }
 };
+
+/**
+ * Generic Delete API Service Function
+ * Sends DELETE request to remove a resource from the server.
+ */
+export const deleteItem = async <R>(endpoint: string): Promise<R> => {
+  try {
+    const response = await apiClient.delete<R>(endpoint);
+    return response;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to delete resource. Please try again.');
+  }
+};
