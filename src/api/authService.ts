@@ -1,5 +1,5 @@
 import { apiClient } from './client';
-import { LoginCredentials, AuthResponse } from '../types/auth';
+import { LoginCredentials, RegisterData, AuthResponse } from '../types/auth';
 
 /**
  * Login API Service Function
@@ -9,7 +9,6 @@ export const loginUser = async (credentials: LoginCredentials): Promise<AuthResp
   try {
     const response = await apiClient.post<AuthResponse>('/auth/login', credentials);
     
-    // If token is received, save it to localStorage
     if (response.accessToken) {
       localStorage.setItem('access_token', response.accessToken);
       localStorage.setItem('refresh_token', response.refreshToken);
@@ -18,5 +17,24 @@ export const loginUser = async (credentials: LoginCredentials): Promise<AuthResp
     return response;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Login failed. Please check your credentials.');
+  }
+};
+
+/**
+ * Register API Service Function
+ * Sends POST request to register a new user and saves tokens.
+ */
+export const registerUser = async (data: RegisterData): Promise<AuthResponse> => {
+  try {
+    const response = await apiClient.post<AuthResponse>('/auth/register', data);
+    
+    if (response.accessToken) {
+      localStorage.setItem('access_token', response.accessToken);
+      localStorage.setItem('refresh_token', response.refreshToken);
+    }
+    
+    return response;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Registration failed. Please try again.');
   }
 };
