@@ -1,12 +1,17 @@
 import { http, HttpResponse } from 'msw';
 
+interface LoginRequestBody {
+  email?: string;
+  password?: string;
+}
+
 /**
  * MSW Request Handlers for Mocking API Responses
  */
 export const handlers = [
   // Mock POST /auth/login endpoint
   http.post('/api/v1/auth/login', async ({ request }) => {
-    const body = (await request.json()) as any;
+    const body = (await request.json()) as LoginRequestBody;
     
     if (body.email === 'test@example.com' && body.password === 'password123') {
       return HttpResponse.json({

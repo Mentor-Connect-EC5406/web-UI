@@ -1,40 +1,20 @@
 import { apiClient } from './client';
-import { LoginCredentials, RegisterData, AuthResponse } from '../types/auth';
+import axios from 'axios'; // axios import කරගන්න
 
-/**
- * Login API Service Function
- * Sends POST request with user credentials and returns user profile and tokens.
- */
 export const loginUser = async (credentials: LoginCredentials): Promise<AuthResponse> => {
   try {
     const response = await apiClient.post<AuthResponse>('/auth/login', credentials);
-    
     if (response.accessToken) {
       localStorage.setItem('access_token', response.accessToken);
       localStorage.setItem('refresh_token', response.refreshToken);
     }
-    
     return response;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Login failed. Please check your credentials.');
-  }
-};
-
-/**
- * Register API Service Function
- * Sends POST request to register a new user and saves tokens.
- */
-export const registerUser = async (data: RegisterData): Promise<AuthResponse> => {
-  try {
-    const response = await apiClient.post<AuthResponse>('/auth/register', data);
-    
-    if (response.accessToken) {
-      localStorage.setItem('access_token', response.accessToken);
-      localStorage.setItem('refresh_token', response.refreshToken);
+  } catch (error: unknown) {
+    let errorMessage = 'Login failed. Please check your credentials.';
+    if (axios.isAxiosError(error)) {
+      errorMessage = error.response?.data?.message || errorMessage;
     }
-    
-    return response;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Registration failed. Please try again.');
+    // preserve-caught-error rule එක සඳහා { cause: error } එකතු කරන්න
+    throw new Error(errorMessage, { cause: error });
   }
 };

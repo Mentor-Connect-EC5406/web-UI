@@ -1,4 +1,5 @@
 import { apiClient } from './client';
+import axios from 'axios';
 
 // Pagination and Filtering Parameters Interface
 export interface PaginationParams {
@@ -29,7 +30,8 @@ export const getTableData = async <T>(
   try {
     const response = await apiClient.get<PaginatedResponse<T>>(endpoint, { params });
     return response;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Failed to fetch table data.');
+  } catch (error: unknown) {
+    const message = axios.isAxiosError(error) ? error.response?.data?.message : undefined;
+    throw new Error(message || 'Failed to fetch table data.', { cause: error });
   }
 };
