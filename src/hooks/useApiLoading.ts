@@ -3,7 +3,7 @@ import { useState, useCallback } from 'react';
 /**
  * Custom Hook for managing API loading states, errors, and data in components.
  */
-export const useApiLoading = <T = any>() => {
+export const useApiLoading = <T = unknown>() => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<T | null>(null);
@@ -15,8 +15,8 @@ export const useApiLoading = <T = any>() => {
       const result = await apiCall();
       setData(result);
       return result;
-    } catch (err: any) {
-      const errorMessage = err.message || 'An unexpected error occurred.';
+    } catch (err: unknown) {
+      const errorMessage = (err instanceof Error && err.message) || 'An unexpected error occurred.';
       setError(errorMessage);
       throw err;
     } finally {

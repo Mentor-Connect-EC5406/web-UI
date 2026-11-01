@@ -1,4 +1,5 @@
 import { apiClient } from './client';
+import axios from 'axios';
 import { LoginCredentials, RegisterData, AuthResponse } from '../types/auth';
 
 /**
@@ -15,8 +16,9 @@ export const loginUser = async (credentials: LoginCredentials): Promise<AuthResp
     }
     
     return response;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Login failed. Please check your credentials.');
+  } catch (error: unknown) {
+    const message = axios.isAxiosError(error) ? error.response?.data?.message : undefined;
+    throw new Error(message || 'Login failed. Please check your credentials.', { cause: error });
   }
 };
 
@@ -34,7 +36,8 @@ export const registerUser = async (data: RegisterData): Promise<AuthResponse> =>
     }
     
     return response;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Registration failed. Please try again.');
+  } catch (error: unknown) {
+    const message = axios.isAxiosError(error) ? error.response?.data?.message : undefined;
+    throw new Error(message || 'Registration failed. Please try again.', { cause: error });
   }
 };

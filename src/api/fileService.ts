@@ -1,4 +1,5 @@
 import { apiClient } from './client';
+import axios from 'axios';
 
 // Upload Response Interface
 export interface UploadResponse {
@@ -23,7 +24,8 @@ export const uploadFile = async (file: File, endpoint: string = '/upload'): Prom
       },
     });
     return response;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'File upload failed. Please try again.');
+  } catch (error: unknown) {
+    const message = axios.isAxiosError(error) ? error.response?.data?.message : undefined;
+    throw new Error(message || 'File upload failed. Please try again.', { cause: error });
   }
 };
