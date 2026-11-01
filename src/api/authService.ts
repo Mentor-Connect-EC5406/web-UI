@@ -1,5 +1,5 @@
-import { apiClient } from './client';
-import { LoginCredentials, RegisterData, AuthResponse } from '../types/auth';
+import { apiClient, getApiErrorMessage, unwrapApiResponse } from './client';
+import { type LoginCredentials, type RegisterData, type AuthResponse } from '../types/auth';
 
 /**
  * Login API Service Function
@@ -7,7 +7,7 @@ import { LoginCredentials, RegisterData, AuthResponse } from '../types/auth';
  */
 export const loginUser = async (credentials: LoginCredentials): Promise<AuthResponse> => {
   try {
-    const response = await apiClient.post<AuthResponse>('/auth/login', credentials);
+    const response = unwrapApiResponse(await apiClient.post<AuthResponse>('/auth/login', credentials));
     
     if (response.accessToken) {
       localStorage.setItem('access_token', response.accessToken);
@@ -15,8 +15,11 @@ export const loginUser = async (credentials: LoginCredentials): Promise<AuthResp
     }
     
     return response;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Login failed. Please check your credentials.');
+  } catch (error: unknown) {
+    throw new Error(
+      getApiErrorMessage(error) ?? 'Login failed. Please check your credentials.',
+      { cause: error }
+    );
   }
 };
 
@@ -26,7 +29,7 @@ export const loginUser = async (credentials: LoginCredentials): Promise<AuthResp
  */
 export const registerUser = async (data: RegisterData): Promise<AuthResponse> => {
   try {
-    const response = await apiClient.post<AuthResponse>('/auth/register', data);
+    const response = unwrapApiResponse(await apiClient.post<AuthResponse>('/auth/register', data));
     
     if (response.accessToken) {
       localStorage.setItem('access_token', response.accessToken);
@@ -34,7 +37,9 @@ export const registerUser = async (data: RegisterData): Promise<AuthResponse> =>
     }
     
     return response;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Registration failed. Please try again.');
+  } catch (error: unknown) {
+    throw new Error(getApiErrorMessage(error) ?? 'Registration failed. Please try again.', {
+      cause: error,
+    });
   }
 };
