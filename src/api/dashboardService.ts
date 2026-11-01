@@ -1,4 +1,5 @@
 import { apiClient } from './client';
+import { getApiErrorMessage } from './errorUtils';
 
 // Dashboard Stats Interface
 export interface DashboardStats {
@@ -17,7 +18,7 @@ export const getDashboardStats = async (): Promise<DashboardStats> => {
   try {
     const response = await apiClient.get<DashboardStats>('/dashboard/stats');
     return response;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Failed to fetch dashboard statistics.');
+  } catch (error: unknown) {
+    throw new Error(getApiErrorMessage(error, 'Failed to fetch dashboard statistics.'), { cause: error });
   }
 };

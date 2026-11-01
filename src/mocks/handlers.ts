@@ -6,7 +6,7 @@ import { http, HttpResponse } from 'msw';
 export const handlers = [
   // Mock POST /auth/login endpoint
   http.post('/api/v1/auth/login', async ({ request }) => {
-    const body = (await request.json()) as any;
+    const body = (await request.json()) as { email?: string; password?: string };
     
     if (body.email === 'test@example.com' && body.password === 'password123') {
       return HttpResponse.json({

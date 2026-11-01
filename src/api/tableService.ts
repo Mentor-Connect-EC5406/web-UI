@@ -1,4 +1,5 @@
 import { apiClient } from './client';
+import { getApiErrorMessage } from './errorUtils';
 
 // Pagination and Filtering Parameters Interface
 export interface PaginationParams {
@@ -29,7 +30,7 @@ export const getTableData = async <T>(
   try {
     const response = await apiClient.get<PaginatedResponse<T>>(endpoint, { params });
     return response;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Failed to fetch table data.');
+  } catch (error: unknown) {
+    throw new Error(getApiErrorMessage(error, 'Failed to fetch table data.'), { cause: error });
   }
 };

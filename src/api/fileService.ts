@@ -1,4 +1,5 @@
 import { apiClient } from './client';
+import { getApiErrorMessage } from './errorUtils';
 
 // Upload Response Interface
 export interface UploadResponse {
@@ -23,7 +24,7 @@ export const uploadFile = async (file: File, endpoint: string = '/upload'): Prom
       },
     });
     return response;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'File upload failed. Please try again.');
+  } catch (error: unknown) {
+    throw new Error(getApiErrorMessage(error, 'File upload failed. Please try again.'), { cause: error });
   }
 };
