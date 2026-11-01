@@ -1,20 +1,58 @@
+import axios, { type AxiosResponse } from 'axios';
 import { apiClient } from './client';
-import axios from 'axios'; // axios import කරගන්න
+import { type AuthResponse, type LoginCredentials } from '../types/auth';
+
+const isAxiosResponse = <T>(response: T | AxiosResponse<T>): response is AxiosResponse<T> =>
+  typeof response === 'object' &&
+  response !== null &&
+  'status' in response &&
+  'headers' in response &&
+  'data' in response;
+
+const getResponseData = <T>(response: T | AxiosResponse<T>): T => {
+  if (isAxiosResponse(response)) {
+    return response.data;
+  }
+
+  return response;
+};
+
+const getErrorMessage = (error: unknown): string | undefined => {
+  if (axios.isAxiosError(error)) {
+    const data: unknown = error.response?.data;
+    if (typeof data === 'object' && data !== null && 'message' in data) {
+      const message = data.message;
+      return typeof message === 'string' ? message : undefined;
+    }
+  }
+
+  if (typeof error === 'object' && error !== null && 'response' in error) {
+    const response = error.response;
+    if (typeof response === 'object' && response !== null && 'data' in response) {
+      const data = response.data;
+      if (typeof data === 'object' && data !== null && 'message' in data) {
+        const message = data.message;
+        return typeof message === 'string' ? message : undefined;
+      }
+    }
+  }
+
+  return undefined;
+};
 
 export const loginUser = async (credentials: LoginCredentials): Promise<AuthResponse> => {
   try {
     const response = await apiClient.post<AuthResponse>('/auth/login', credentials);
-    if (response.accessToken) {
-      localStorage.setItem('access_token', response.accessToken);
-      localStorage.setItem('refresh_token', response.refreshToken);
+    const data = getResponseData(response);
+    if (data.accessToken) {
+      localStorage.setItem('access_token', data.accessToken);
+      localStorage.setItem('refresh_token', data.refreshToken);
     }
-    return response;
+    return data;
   } catch (error: unknown) {
-    let errorMessage = 'Login failed. Please check your credentials.';
-    if (axios.isAxiosError(error)) {
-      errorMessage = error.response?.data?.message || errorMessage;
-    }
-    // preserve-caught-error rule එක සඳහා { cause: error } එකතු කරන්න
-    throw new Error(errorMessage, { cause: error });
+    throw new Error(
+      getErrorMessage(error) ?? 'Login failed. Please check your credentials.',
+      { cause: error }
+    );
   }
 };

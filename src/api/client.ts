@@ -1,4 +1,41 @@
-import axios from 'axios';
+import axios, { type AxiosResponse } from 'axios';
+
+export const unwrapApiResponse = <T>(response: T | AxiosResponse<T>): T => {
+  if (
+    typeof response === 'object' &&
+    response !== null &&
+    'status' in response &&
+    'headers' in response &&
+    'data' in response
+  ) {
+    return response.data;
+  }
+
+  return response as T;
+};
+
+export const getApiErrorMessage = (error: unknown): string | undefined => {
+  if (axios.isAxiosError(error)) {
+    const data: unknown = error.response?.data;
+    if (typeof data === 'object' && data !== null && 'message' in data) {
+      const message = data.message;
+      return typeof message === 'string' ? message : undefined;
+    }
+  }
+
+  if (typeof error === 'object' && error !== null && 'response' in error) {
+    const response = error.response;
+    if (typeof response === 'object' && response !== null && 'data' in response) {
+      const data = response.data;
+      if (typeof data === 'object' && data !== null && 'message' in data) {
+        const message = data.message;
+        return typeof message === 'string' ? message : undefined;
+      }
+    }
+  }
+
+  return undefined;
+};
 
 // Create an Axios instance with base URL and default headers
 export const apiClient = axios.create({
