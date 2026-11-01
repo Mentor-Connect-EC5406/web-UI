@@ -7,7 +7,9 @@ import { type LoginCredentials, type RegisterData, type AuthResponse } from '../
  */
 export const loginUser = async (credentials: LoginCredentials): Promise<AuthResponse> => {
   try {
-    const response = unwrapApiResponse(await apiClient.post<AuthResponse>('/auth/login', credentials));
+    const response = unwrapApiResponse<AuthResponse>(
+      await apiClient.post<AuthResponse>('/auth/login', credentials)
+    );
     
     if (response.accessToken) {
       localStorage.setItem('access_token', response.accessToken);
@@ -29,7 +31,9 @@ export const loginUser = async (credentials: LoginCredentials): Promise<AuthResp
  */
 export const registerUser = async (data: RegisterData): Promise<AuthResponse> => {
   try {
-    const response = unwrapApiResponse(await apiClient.post<AuthResponse>('/auth/register', data));
+    const response = unwrapApiResponse<AuthResponse>(
+      await apiClient.post<AuthResponse>('/auth/register', data)
+    );
     
     if (response.accessToken) {
       localStorage.setItem('access_token', response.accessToken);
