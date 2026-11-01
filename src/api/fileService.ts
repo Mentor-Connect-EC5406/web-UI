@@ -23,7 +23,8 @@ export const uploadFile = async (file: File, endpoint: string = '/upload'): Prom
       },
     });
     return response;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'File upload failed. Please try again.');
+  } catch (error: unknown) {
+    const message = (error as { response?: { data?: { message?: string } } }).response?.data?.message;
+    throw new Error(message || 'File upload failed. Please try again.', { cause: error });
   }
 };

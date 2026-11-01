@@ -29,7 +29,8 @@ export const getTableData = async <T>(
   try {
     const response = await apiClient.get<PaginatedResponse<T>>(endpoint, { params });
     return response;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Failed to fetch table data.');
+  } catch (error: unknown) {
+    const message = (error as { response?: { data?: { message?: string } } }).response?.data?.message;
+    throw new Error(message || 'Failed to fetch table data.', { cause: error });
   }
 };

@@ -17,7 +17,8 @@ export const getDashboardStats = async (): Promise<DashboardStats> => {
   try {
     const response = await apiClient.get<DashboardStats>('/dashboard/stats');
     return response;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Failed to fetch dashboard statistics.');
+  } catch (error: unknown) {
+    const message = (error as { response?: { data?: { message?: string } } }).response?.data?.message;
+    throw new Error(message || 'Failed to fetch dashboard statistics.', { cause: error });
   }
 };

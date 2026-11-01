@@ -8,8 +8,9 @@ export const createItem = async <T, R>(endpoint: string, data: T): Promise<R> =>
   try {
     const response = await apiClient.post<R>(endpoint, data);
     return response;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Failed to create resource. Please try again.');
+  } catch (error: unknown) {
+    const message = (error as { response?: { data?: { message?: string } } }).response?.data?.message;
+    throw new Error(message || 'Failed to create resource. Please try again.', { cause: error });
   }
 };
 
@@ -21,8 +22,9 @@ export const updateItem = async <T, R>(endpoint: string, data: T): Promise<R> =>
   try {
     const response = await apiClient.put<R>(endpoint, data);
     return response;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Failed to update resource. Please try again.');
+  } catch (error: unknown) {
+    const message = (error as { response?: { data?: { message?: string } } }).response?.data?.message;
+    throw new Error(message || 'Failed to update resource. Please try again.', { cause: error });
   }
 };
 
@@ -34,8 +36,9 @@ export const patchItem = async <T, R>(endpoint: string, data: T): Promise<R> => 
   try {
     const response = await apiClient.patch<R>(endpoint, data);
     return response;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Failed to partially update resource. Please try again.');
+  } catch (error: unknown) {
+    const message = (error as { response?: { data?: { message?: string } } }).response?.data?.message;
+    throw new Error(message || 'Failed to partially update resource. Please try again.', { cause: error });
   }
 };
 
@@ -47,7 +50,8 @@ export const deleteItem = async <R>(endpoint: string): Promise<R> => {
   try {
     const response = await apiClient.delete<R>(endpoint);
     return response;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Failed to delete resource. Please try again.');
+  } catch (error: unknown) {
+    const message = (error as { response?: { data?: { message?: string } } }).response?.data?.message;
+    throw new Error(message || 'Failed to delete resource. Please try again.', { cause: error });
   }
 };

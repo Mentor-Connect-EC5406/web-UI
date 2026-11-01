@@ -1,5 +1,5 @@
 import { apiClient } from './client';
-import { LoginCredentials, RegisterData, AuthResponse } from '../types/auth';
+import type { LoginCredentials, RegisterData, AuthResponse } from '../types/auth';
 
 /**
  * Login API Service Function
@@ -15,8 +15,9 @@ export const loginUser = async (credentials: LoginCredentials): Promise<AuthResp
     }
     
     return response;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Login failed. Please check your credentials.');
+  } catch (error: unknown) {
+    const message = (error as { response?: { data?: { message?: string } } }).response?.data?.message;
+    throw new Error(message || 'Login failed. Please check your credentials.', { cause: error });
   }
 };
 
@@ -34,7 +35,8 @@ export const registerUser = async (data: RegisterData): Promise<AuthResponse> =>
     }
     
     return response;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Registration failed. Please try again.');
+  } catch (error: unknown) {
+    const message = (error as { response?: { data?: { message?: string } } }).response?.data?.message;
+    throw new Error(message || 'Registration failed. Please try again.', { cause: error });
   }
 };
