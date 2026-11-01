@@ -16,7 +16,7 @@ export const useApiLoading = <T = unknown>() => {
       setData(result);
       return result;
     } catch (err: unknown) {
-      const errorMessage = (err instanceof Error && err.message) || 'An unexpected error occurred.';
+      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred.';
       setError(errorMessage);
       throw err;
     } finally {

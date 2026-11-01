@@ -1,5 +1,4 @@
-import { apiClient } from './client';
-import axios from 'axios';
+import { apiClient, getApiErrorMessage, unwrapApiResponse } from './client';
 
 // Dashboard Stats Interface
 export interface DashboardStats {
@@ -17,9 +16,10 @@ export interface DashboardStats {
 export const getDashboardStats = async (): Promise<DashboardStats> => {
   try {
     const response = await apiClient.get<DashboardStats>('/dashboard/stats');
-    return response;
+    return unwrapApiResponse(response);
   } catch (error: unknown) {
-    const message = axios.isAxiosError(error) ? error.response?.data?.message : undefined;
-    throw new Error(message || 'Failed to fetch dashboard statistics.', { cause: error });
+    throw new Error(getApiErrorMessage(error) ?? 'Failed to fetch dashboard statistics.', {
+      cause: error,
+    });
   }
 };

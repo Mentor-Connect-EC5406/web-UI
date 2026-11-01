@@ -1,4 +1,33 @@
-import axios from 'axios';
+import axios, {
+  type AxiosError,
+  type AxiosResponse,
+  type InternalAxiosRequestConfig,
+} from 'axios';
+
+export const unwrapApiResponse = <T>(response: T | AxiosResponse<T>): T => {
+  if (
+    typeof response === 'object' &&
+    response !== null &&
+    'status' in response &&
+    'headers' in response &&
+    'data' in response
+  ) {
+    return response.data;
+  }
+
+  return response;
+};
+
+export const getApiErrorMessage = (error: unknown): string | undefined => {
+  if (axios.isAxiosError(error)) {
+    const data: unknown = error.response?.data;
+    const message =
+      typeof data === 'object' && data !== null && 'message' in data ? data.message : undefined;
+    return typeof message === 'string' ? message : undefined;
+  }
+
+  return undefined;
+};
 
 // Create an Axios instance with base URL and default headers
 export const apiClient = axios.create({
@@ -11,20 +40,20 @@ export const apiClient = axios.create({
 
 // Request Interceptor: Attach Auth Token if available
 apiClient.interceptors.request.use(
-  (config) => {
+  (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem('access_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error: AxiosError) => Promise.reject(error)
 );
 
 // Response Interceptor: Enhanced Global Error Handling
 apiClient.interceptors.response.use(
-  (response) => response.data,
-  (error) => {
+  (response: AxiosResponse<unknown>) => response,
+  (error: AxiosError) => {
     const status = error.response ? error.response.status : null;
 
     // Handle different HTTP error statuses globally
