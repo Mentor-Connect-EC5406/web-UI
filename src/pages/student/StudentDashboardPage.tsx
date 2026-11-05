@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, Bookmark, Calendar, CalendarCheck, Search, Target } from 'lucide-react';
+import { ArrowRight, Bookmark, Calendar, CalendarCheck, Target } from 'lucide-react';
 import type { Session } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { Card, CardBody, CardHeader } from '@/components/ui/Card';
@@ -9,7 +9,7 @@ import { AsyncContent } from '@/components/common/AsyncContent';
 import { ListSkeleton } from '@/components/common/ListSkeleton';
 import { PageHeader } from '@/components/common/PageHeader';
 import { PersonRow } from '@/components/common/PersonRow';
-import { QuickLinks } from '@/components/common/QuickLinks';
+
 import { RatingStars } from '@/components/common/RatingStars';
 import { StatCard } from '@/components/common/StatCard';
 import { SessionCard } from '@/components/booking/SessionCard';
@@ -101,13 +101,6 @@ export default function StudentDashboardPage() {
         </div>
 
         <div className="space-y-6">
-          <QuickLinks
-            links={[
-              { label: 'Find a mentor', to: paths.student.mentors, icon: Search },
-              { label: 'My sessions', to: paths.student.sessions, icon: Calendar },
-              { label: 'Career goals', to: paths.student.goals, icon: Target },
-            ]}
-          />
           <Card>
             <CardHeader
               title="Recommended mentors"

@@ -56,7 +56,7 @@ export function AppLayout({ nav }: { nav: NavItem[] }) {
           menuOpen ? 'translate-x-0' : '-translate-x-full',
         )}
       >
-        <div className="flex h-16 items-center justify-between border-b border-line px-4">
+        <div className="flex h-16 items-center justify-between border-b border-line pl-6 pr-4">
           <BrandLogo size="sm" />
           <Button variant="ghost" size="icon" className="md:hidden" aria-label="Close menu" onClick={() => setMenuOpen(false)}>
             <X />
