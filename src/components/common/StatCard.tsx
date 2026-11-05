@@ -1,26 +1,27 @@
 import type { LucideIcon } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
+import { cn } from '@/lib/cn';
 
 interface StatCardProps {
   label: string;
   value: string | number;
-  icon: LucideIcon;
+  icon?: LucideIcon;
   // short supporting text e.g. "3 this month"
   hint?: string;
+  className?: string;
 }
 
-// metric tile used on dashboards with interactive hover popup transition
-export function StatCard({ label, value, icon: Icon, hint }: StatCardProps) {
+// metric tile used on dashboards with centered details and hover popup transition
+export function StatCard({ label, value, hint, className }: StatCardProps) {
   return (
-    <Card className="group flex items-center justify-between gap-3 p-5 cursor-pointer transition-all duration-300 ease-out hover:-translate-y-1.5 hover:scale-[1.02] hover:shadow-lg hover:shadow-black/5 hover:border-brand/40">
-      <div>
-        <p className="text-sm text-ink-secondary transition-colors duration-200 group-hover:text-ink">{label}</p>
-        <p className="mt-1 text-2xl font-semibold text-ink">{value}</p>
-        {hint && <p className="mt-1 text-xs text-ink-muted">{hint}</p>}
-      </div>
-      <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-surface-subtle transition-all duration-300 ease-out group-hover:bg-brand-soft/50 group-hover:scale-110">
-        <Icon className="size-6 text-ink-secondary transition-colors duration-200 group-hover:text-ink" aria-hidden />
-      </div>
+    <Card className={cn("group flex flex-col items-center justify-center p-5 text-center cursor-pointer transition-all duration-300 ease-out hover:-translate-y-1.5 hover:scale-[1.02] hover:shadow-lg hover:shadow-black/5 hover:border-brand/40", className)}>
+      <p className="text-sm font-medium text-ink-secondary transition-colors duration-200 group-hover:text-ink">
+        {label}
+      </p>
+      <p className="mt-1 text-3xl font-bold tracking-tight text-ink">
+        {value}
+      </p>
+      {hint && <p className="mt-1 text-xs text-ink-muted">{hint}</p>}
     </Card>
   );
 }

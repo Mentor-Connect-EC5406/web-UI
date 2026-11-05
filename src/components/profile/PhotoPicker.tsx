@@ -2,7 +2,7 @@ import { useRef, useState, type ChangeEvent } from 'react';
 import { Camera } from 'lucide-react';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
-import { MAX_PHOTO_BYTES, PHOTO_TYPES } from '@/config/constants';
+import { PHOTO_TYPES } from '@/config/constants';
 import { photoError } from '@/lib/profile';
 
 interface PhotoPickerProps {
@@ -57,10 +57,8 @@ export function PhotoPicker({ name, value, onChange }: PhotoPickerProps) {
         aria-label="Profile photo"
         onChange={handleFile}
       />
-      {error ? (
+      {error && (
         <p role="alert" className="text-xs text-accent">{error}</p>
-      ) : (
-        <p className="text-xs text-ink-muted">JPG, PNG or WebP up to {MAX_PHOTO_BYTES / 1024 / 1024} MB</p>
       )}
     </div>
   );

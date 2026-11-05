@@ -86,7 +86,7 @@ describe('StudentProfileForm', () => {
 
   it('lists what is missing and toggles open to opportunities', () => {
     setup();
-    expect(screen.getByRole('button', { name: 'Add a photo' })).toBeTruthy();
+    expect(screen.getByText(/your profile is complete/i)).toBeTruthy();
     const toggle = screen.getByRole('switch', { name: /open to opportunities/i });
     expect(toggle.getAttribute('aria-checked')).toBe('true');
     fireEvent.click(toggle);

@@ -24,7 +24,8 @@ function ViewCard({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-export function OpenToOpportunitiesBadge() {
+export function OpenToOpportunitiesBadge() { return null; }
+function _Old_OpenToOpportunitiesBadge() {
   return (
     <Badge tone="success">
       <BriefcaseBusiness className="size-3" aria-hidden /> Open to opportunities
