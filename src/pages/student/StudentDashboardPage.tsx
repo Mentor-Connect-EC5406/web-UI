@@ -101,12 +101,12 @@ export default function StudentDashboardPage() {
         </div>
 
         <div className="space-y-6">
-          <Card>
-            <CardHeader
-              title="Recommended mentors"
-              action={<Button asChild variant="ghost" size="sm"><Link to={paths.student.mentors}>See all</Link></Button>}
-            />
-            <CardBody>
+          <section aria-labelledby="recommended-mentors">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 id="recommended-mentors" className="text-lg font-semibold text-ink">Recommended mentors</h2>
+              <Button asChild variant="ghost" size="sm"><Link to={paths.student.mentors}>See all</Link></Button>
+            </div>
+            <Card className="p-4">
               <AsyncContent query={mentors} loading={<ListSkeleton rows={3} rowClassName="h-14" />}>
                 {(list) => (
                   <div className="space-y-2">
@@ -118,8 +118,8 @@ export default function StudentDashboardPage() {
                   </div>
                 )}
               </AsyncContent>
-            </CardBody>
-          </Card>
+            </Card>
+          </section>
         </div>
       </div>
     </div>
