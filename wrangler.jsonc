@@ -1,0 +1,10 @@
+{
+  // cloudflare workers static site, the name must match the worker created in the dashboard
+  "name": "mentorconnect",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "./dist",
+    // react router owns the urls, so unknown paths serve index.html
+    "not_found_handling": "single-page-application"
+  }
+}
