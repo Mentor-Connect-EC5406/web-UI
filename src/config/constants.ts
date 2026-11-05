@@ -32,4 +32,6 @@ export const REVIEW_MIN_LENGTH = 20;
 export const REVIEW_MAX_LENGTH = 1000;
 
 export const MESSAGE_MAX_LENGTH = 1000;
+// conversations listed in the header notifications panel
+export const NOTIFICATION_PREVIEW_COUNT = 5;
 export const GOAL_TITLE_MAX_LENGTH = 100;

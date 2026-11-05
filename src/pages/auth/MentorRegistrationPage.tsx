@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { Info, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -8,14 +8,17 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { INDUSTRIES } from '@/config/options';
 import { useSession } from '@/auth/session';
+import { USE_MOCKS } from '@/config/env';
 import { paths } from '@/app/paths';
 
-/** Dedicated mentor registration form with work and profile details */
+// demo mentor registration, with real sign in mentors register through asgardeo and onboarding instead
 export default function MentorRegistrationPage() {
   const signInAs = useSession((s) => s.signInAs);
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [field, setField] = useState<string>(INDUSTRIES[0]);
+
+  if (!USE_MOCKS) return <Navigate to={`${paths.signup}?role=mentor`} replace />;
 
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();

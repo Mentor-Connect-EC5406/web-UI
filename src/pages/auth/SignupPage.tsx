@@ -1,19 +1,23 @@
+import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { useSession } from '@/auth/session';
+import { USE_MOCKS } from '@/config/env';
 import { paths } from '@/app/paths';
 
-// sign up will hand off to Asgardeo once connected, demo mode creates an account directly
+// sign up hands off to asgardeo where people choose create account, demo mode creates an account directly
 export default function SignupPage() {
   const signUp = useSession((s) => s.signUp);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const isMentor = searchParams.get('role') === 'mentor';
+  const [leaving, setLeaving] = useState(false);
 
   function handleSignUp() {
-    signUp();
-    navigate(isMentor ? `${paths.onboarding}?role=mentor` : paths.onboarding);
+    signUp(isMentor ? 'MENTOR' : undefined);
+    if (USE_MOCKS) navigate(isMentor ? `${paths.onboarding}?role=mentor` : paths.onboarding);
+    else setLeaving(true);
   }
 
   return (
@@ -29,7 +33,7 @@ export default function SignupPage() {
         </p>
       </div>
 
-      <Button size="lg" className="w-full" onClick={handleSignUp}>
+      <Button size="lg" className="w-full" onClick={handleSignUp} loading={leaving}>
         {isMentor ? 'Register as a mentor' : 'Sign up'}
       </Button>
       <p className="mt-3 text-center text-xs text-ink-muted">Secure sign-up with Asgardeo</p>

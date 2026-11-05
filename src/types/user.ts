@@ -17,7 +17,32 @@ export interface User {
 export interface NewAccount {
   name: string;
   email: string;
+  // from the identity provider when the person gave them at sign up
+  firstName?: string;
+  lastName?: string;
 }
+
+// what onboarding collects before the account is created
+export type OnboardingDetails =
+  | {
+      role: 'STUDENT';
+      firstName: string;
+      lastName: string;
+      university: string;
+      faculty: string;
+      // 1 for first year, the backend accepts 1 to 10
+      academicYear: number | null;
+    }
+  | {
+      role: 'MENTOR';
+      firstName: string;
+      lastName: string;
+      title: string;
+      organization: string;
+      industry: string;
+      experienceYears: number;
+      bio: string;
+    };
 
 // what a student keeps on their profile, mentors see it when a session is booked
 export interface StudentProfile extends ProfileExtras {

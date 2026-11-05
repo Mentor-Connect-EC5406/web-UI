@@ -8,16 +8,19 @@ interface SelectProps {
   value?: string;
   onValueChange?: (value: string) => void;
   placeholder: string;
+  // set when the select is read from FormData
+  name?: string;
+  required?: boolean;
   options: readonly string[] | readonly { value: string; label: string }[];
   className?: string;
   'aria-label'?: string;
 }
 
 // pass options as plain strings or as value label pairs
-export function Select({ id, value, onValueChange, placeholder, options, className, ...aria }: SelectProps) {
+export function Select({ id, value, onValueChange, placeholder, options, className, name, required, ...aria }: SelectProps) {
   const items = options.map((o) => (typeof o === 'string' ? { value: o, label: o } : o));
   return (
-    <SelectPrimitive.Root value={value} onValueChange={onValueChange}>
+    <SelectPrimitive.Root value={value} onValueChange={onValueChange} name={name} required={required}>
       <SelectPrimitive.Trigger
         id={id}
         className={cn(fieldClasses, 'flex h-10 items-center justify-between gap-2 data-[placeholder]:text-ink-muted', className)}

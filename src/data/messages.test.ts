@@ -43,4 +43,19 @@ describe('messagesApi (mock)', () => {
     const inbox = await run(messagesApi.conversations('mentor-1'));
     expect(inbox.find((c) => c.id === id)).toMatchObject({ with: { name: 'Tharushi Senanayake' }, lastMessage: null, unreadCount: 0 });
   });
+
+  it('lets students search every mentor and mentors search students', async () => {
+    const mentors = await run(messagesApi.contacts('student-1', ''));
+    expect(mentors.every((p) => p.role === 'MENTOR')).toBe(true);
+    expect(mentors.length).toBeGreaterThan(3);
+    expect((await run(messagesApi.contacts('student-1', 'ux'))).map((p) => p.name)).toEqual(['Chamari Wickramasinghe']);
+    const students = await run(messagesApi.contacts('mentor-1', ''));
+    expect(students.every((p) => p.role === 'STUDENT')).toBe(true);
+  });
+
+  it('starts a conversation with a mentor found by search', async () => {
+    const id = await run(messagesApi.start({ userId: 'student-1', otherId: 'mentor-4' }));
+    const inbox = await run(messagesApi.conversations('student-1'));
+    expect(inbox.find((c) => c.id === id)?.with).toEqual({ id: 'mentor-4', name: 'Chamari Wickramasinghe', role: 'MENTOR', avatarUrl: null });
+  });
 });
