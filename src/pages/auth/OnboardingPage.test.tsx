@@ -35,7 +35,7 @@ describe('OnboardingPage', () => {
     expect(screen.queryByText(/admin/i)).toBeNull();
   });
 
-  it('a mentor chooses a role, fills the details and lands on the mentor area', () => {
+  it('a mentor chooses a role, fills the details and lands on the mentor area', async () => {
     useSession.getState().signUp();
     renderPage();
     fireEvent.click(screen.getByRole('radio', { name: /i'm a mentor/i }));
@@ -43,8 +43,9 @@ describe('OnboardingPage', () => {
     fireEvent.change(screen.getByLabelText(/job title/i), { target: { value: 'Engineer' } });
     fireEvent.change(screen.getByLabelText(/organisation/i), { target: { value: 'WSO2' } });
     fireEvent.change(screen.getByLabelText(/years of experience/i), { target: { value: '5' } });
+    fireEvent.change(screen.getByLabelText(/about you/i), { target: { value: 'I help students into tech.' } });
     fireEvent.click(screen.getByRole('button', { name: /set up my mentor profile/i }));
-    expect(screen.getByText('Mentor home')).toBeTruthy();
+    expect(await screen.findByText('Mentor home')).toBeTruthy();
     expect(useSession.getState().user?.role).toBe('MENTOR');
   });
 });

@@ -25,7 +25,7 @@ export const studentArea: RoleArea = {
     { path: paths.student.goals, element: <CareerGoalsPage />, nav: { label: 'Career goals', icon: Target } },
     {
       path: paths.student.messages,
-      element: <MessagesPage emptyHint="Book a session with a mentor to start a conversation." />,
+      element: <MessagesPage emptyHint="Find a mentor and send them a message to get started." contactNoun="mentors" />,
       nav: { label: 'Messages', icon: MessageSquare },
     },
     { path: paths.student.saved, element: <SavedMentorsPage />, nav: { label: 'Saved mentors', icon: Bookmark } },

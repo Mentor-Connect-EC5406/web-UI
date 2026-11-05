@@ -21,7 +21,7 @@ export const mentorArea: RoleArea = {
     { path: paths.mentorArea.students, element: <MentorStudentsPage />, nav: { label: 'Students', icon: Users } },
     {
       path: paths.mentorArea.messages,
-      element: <MessagesPage emptyHint="Conversations with your students appear here." />,
+      element: <MessagesPage emptyHint="Conversations with your students appear here." contactNoun="students" />,
       nav: { label: 'Messages', icon: MessageSquare },
     },
     { path: paths.mentorArea.profile, element: <EditMentorProfilePage />, nav: { label: 'Profile', icon: User } },

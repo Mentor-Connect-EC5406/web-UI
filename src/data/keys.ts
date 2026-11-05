@@ -19,4 +19,5 @@ export const keys = {
   savedMentors: ['savedMentors'] as const,
   conversations: (userId: string) => ['conversations', userId] as const,
   messages: (conversationId: string) => ['messages', conversationId] as const,
+  contacts: (userId: string, query: string) => ['contacts', userId, query] as const,
 };

@@ -8,7 +8,7 @@ export const DEMO_USERS: Record<Role, User> = {
 };
 
 /** Identity the demo sign-up pretends the identity provider returned */
-export const DEMO_NEW_ACCOUNT: NewAccount = { name: 'Kasun Fernando', email: 'kasun@example.com' };
+export const DEMO_NEW_ACCOUNT: NewAccount = { name: 'Kasun Fernando', firstName: 'Kasun', lastName: 'Fernando', email: 'kasun@example.com' };
 
 // profile of the demo student, phone and certificates are left empty so completeness has something to show
 export const STUDENT_PROFILE: StudentProfile = {

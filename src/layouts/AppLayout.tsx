@@ -4,13 +4,32 @@ import { LogOut, Menu, X } from 'lucide-react';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { BrandLogo } from '@/components/common/BrandLogo';
+import { NotificationBell } from '@/components/messages/NotificationBell';
 import { useSession } from '@/auth/session';
+import { useConversations } from '@/data/messages';
+import { NOTIFICATION_PREVIEW_COUNT } from '@/config/constants';
 import { paths } from '@/app/paths';
 import { cn } from '@/lib/cn';
 import type { NavItem } from '@/app/routes/types';
 import { PageOutlet } from './PageOutlet';
 
 const roleLabel = { STUDENT: 'Student', MENTOR: 'Mentor', ADMIN: 'Admin' } as const;
+
+// admins have no inbox so they get no bell
+const inboxPaths = { STUDENT: paths.student, MENTOR: paths.mentorArea } as const;
+
+function HeaderNotifications({ userId, inbox }: { userId: string; inbox: (typeof inboxPaths)[keyof typeof inboxPaths] }) {
+  const conversations = useConversations(userId);
+  return (
+    <NotificationBell
+      conversations={conversations.data?.slice(0, NOTIFICATION_PREVIEW_COUNT)}
+      unread={conversations.data?.reduce((sum, c) => sum + c.unreadCount, 0) ?? 0}
+      currentUserId={userId}
+      conversationHref={inbox.conversation}
+      allHref={inbox.messages}
+    />
+  );
+}
 
 // sidebar items are passed from the router so they stay in sync with the route list
 export function AppLayout({ nav }: { nav: NavItem[] }) {
@@ -77,6 +96,7 @@ export function AppLayout({ nav }: { nav: NavItem[] }) {
             <Menu />
           </Button>
           <div className="flex items-center gap-3">
+            {user.role !== 'ADMIN' && <HeaderNotifications userId={user.id} inbox={inboxPaths[user.role]} />}
             <div className="hidden text-right sm:block">
               <p className="text-sm font-medium text-ink">{user.name}</p>
               <p className="text-xs text-ink-muted">{roleLabel[user.role]}</p>

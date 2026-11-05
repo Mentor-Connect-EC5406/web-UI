@@ -7,6 +7,12 @@ export interface Participant {
   avatarUrl: string | null;
 }
 
+// someone the user can start a new conversation with
+export interface Contact extends Participant {
+  // job title for mentors, shown under the name in search results
+  headline: string;
+}
+
 export interface Message {
   id: string;
   senderId: string;
