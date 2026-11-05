@@ -5,9 +5,9 @@ import { PageOutlet } from './PageOutlet';
 const FOR_STUDENTS = ['Book sessions with mentors who made the same move', 'Get guidance from your first year to your first job'];
 const FOR_MENTORS = ['Share your experience in hours that suit you', 'Help the next generation find their way'];
 
-function Benefits({ title, items }: { title: string; items: string[] }) {
+function Benefits({ title, items, className }: { title: string; items: string[]; className?: string }) {
   return (
-    <div>
+    <div className={className}>
       <h2 className="text-sm font-semibold text-ink">{title}</h2>
       <ul className="mt-2 space-y-2">
         {items.map((item) => (
@@ -25,22 +25,28 @@ export function AuthLayout() {
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
       <aside className="hidden flex-col justify-between bg-brand-soft p-12 lg:flex">
-        <BrandLogo size="lg" />
+        <div className="animate-slide-down-1">
+          <BrandLogo size="lg" />
+          <p className="mt-1.5 text-xs font-medium text-ink-secondary">Connect. Learn. Grow.</p>
+        </div>
         <div className="max-w-md space-y-8">
-          <div>
+          <div className="animate-slide-down-1">
             <h1 className="text-3xl font-bold text-ink">Your first step into industry starts here</h1>
             <p className="mt-3 text-ink-secondary">
               University teaches the theory. MentorConnect connects you with professionals who can show you the rest.
             </p>
           </div>
-          <Benefits title="For students" items={FOR_STUDENTS} />
-          <Benefits title="For mentors" items={FOR_MENTORS} />
+          <Benefits title="For students" items={FOR_STUDENTS} className="animate-slide-down-2" />
+          <Benefits title="For mentors" items={FOR_MENTORS} className="animate-slide-down-3" />
         </div>
-        <p className="text-sm text-ink-secondary">Connect. Learn. Grow.</p>
+        <div aria-hidden />
       </aside>
 
       <div className="flex flex-col items-center justify-center bg-page px-4 py-10">
-        <BrandLogo size="lg" className="mb-8 lg:hidden" />
+        <div className="mb-8 flex flex-col items-center text-center lg:hidden">
+          <BrandLogo size="lg" />
+          <p className="mt-1.5 text-xs font-medium text-ink-secondary">Connect. Learn. Grow.</p>
+        </div>
         <main className="w-full max-w-md">
           <PageOutlet />
         </main>

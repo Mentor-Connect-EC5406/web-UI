@@ -1,6 +1,6 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { parseISO } from 'date-fns';
-import type { ConversationRecord, ConversationSummary, Participant } from '@/types';
+import type { Contact, ConversationRecord, ConversationSummary, Mentor } from '@/types';
 import { MESSAGE_MAX_LENGTH } from '@/config/constants';
 import { db, mutate, respond } from './mockServer';
 import { keys } from './keys';
@@ -26,6 +26,24 @@ const findConversation = (conversationId: string) => {
   return c;
 };
 
+const mentorContact = (m: Mentor): Contact => ({
+  id: m.id,
+  name: m.name,
+  role: 'MENTOR',
+  avatarUrl: m.avatarUrl,
+  headline: `${m.title} at ${m.organization}`,
+});
+
+// students reach every mentor in the directory, mentors reach students
+function contactsFor(userId: string): Contact[] {
+  const mentors = db.mentors.map(mentorContact);
+  const students = db.contacts.filter((p) => p.role === 'STUDENT').map((p) => ({ ...p, headline: 'Student' }));
+  const isMentor = mentors.some((m) => m.id === userId);
+  return (isMentor ? students : mentors).filter((p) => p.id !== userId);
+}
+
+const findPerson = (id: string) => db.contacts.find((p) => p.id === id) ?? db.mentors.map(mentorContact).find((m) => m.id === id);
+
 // replace each function body with a real API call of the same signature
 export const messagesApi = {
   // newest activity first
@@ -36,6 +54,13 @@ export const messagesApi = {
         .map((c) => summarize(c, userId))
         .sort((a, b) => lastActivity(b) - lastActivity(a)),
     ),
+
+  // people the user can message, filtered by name or headline
+  contacts: (userId: string, query: string) =>
+    respond(() => {
+      const q = query.trim().toLowerCase();
+      return contactsFor(userId).filter((p) => !q || `${p.name} ${p.headline}`.toLowerCase().includes(q));
+    }),
 
   messages: (conversationId: string) => respond(() => findConversation(conversationId).messages),
 
@@ -63,16 +88,27 @@ export const messagesApi = {
     respond(() => {
       const existing = db.conversations.find((c) => [userId, otherId].every((id) => c.participants.some((p) => p.id === id)));
       if (existing) return existing.id;
-      const people = [userId, otherId].map((id) => db.contacts.find((p) => p.id === id));
-      if (people.some((p) => !p)) throw new Error('This person cannot be messaged yet.');
+      const [me, other] = [userId, otherId].map(findPerson);
+      if (!me || !other) throw new Error('This person cannot be messaged yet.');
+      // stored participants never carry the search headline
+      const participants = [me, other].map(({ id, name, role, avatarUrl }) => ({ id, name, role, avatarUrl }));
       const id = `c-${Date.now()}`;
-      db.conversations = [...db.conversations, { id, participants: people as Participant[], messages: [], lastReadAt: {} }];
+      db.conversations = [...db.conversations, { id, participants, messages: [], lastReadAt: {} }];
       return id;
     }),
 };
 
 export const useConversations = (userId: string) =>
-  useQuery({ queryKey: keys.conversations(userId), queryFn: () => messagesApi.conversations(userId) });
+  useQuery({ queryKey: keys.conversations(userId), queryFn: () => messagesApi.conversations(userId), enabled: !!userId });
+
+// keeps the last results on screen while the next search loads
+export const useContacts = (userId: string, query: string, enabled = true) =>
+  useQuery({
+    queryKey: keys.contacts(userId, query),
+    queryFn: () => messagesApi.contacts(userId, query),
+    enabled: enabled && !!userId,
+    placeholderData: keepPreviousData,
+  });
 
 export const useMessages = (conversationId: string | null) =>
   useQuery({
