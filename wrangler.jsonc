@@ -6,5 +6,7 @@
     "directory": "./dist",
     // react router owns the urls, so unknown paths serve index.html
     "not_found_handling": "single-page-application"
-  }
+  },
+  // lets cloudflare build a preview url for every pull request
+  "previews": {}
 }
