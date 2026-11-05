@@ -18,7 +18,7 @@ import { PhotoPicker } from './PhotoPicker';
 import { ProfileSection } from './ProfileSection';
 import { LanguagesSection, LinksFields, VisibilitySection, WorkPreferencesSection } from './ProfileSections';
 import { ProfileSummaryCard } from './ProfileSummaryCard';
-import { OpenToOpportunitiesBadge } from './ProfileView';
+
 import { useProfileForm } from './useProfileForm';
 
 interface StudentProfileFormProps {

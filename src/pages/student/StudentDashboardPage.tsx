@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, Bookmark, Calendar, CalendarCheck, Target } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import type { Session } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { Card, CardBody, CardHeader } from '@/components/ui/Card';
