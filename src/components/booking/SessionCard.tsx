@@ -17,23 +17,29 @@ interface SessionCardProps {
 export function SessionCard({ session, counterpart, actions }: SessionCardProps) {
   const name = counterpart === 'mentor' ? session.mentorName : session.studentName;
   return (
-    <Card className="p-4">
-      <div className="flex items-start gap-4">
-        <Avatar name={name} />
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="text-sm font-semibold text-ink">{name}</p>
-            <SessionStatusBadge status={session.status} />
+    <Card className="flex flex-col justify-between p-6 transition-all duration-300 hover:shadow-sm">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-start gap-4 min-w-0 flex-1">
+          <Avatar name={name} className="size-11 shrink-0" />
+          <div className="min-w-0 flex-1 space-y-1.5">
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-base font-semibold text-ink">{name}</p>
+              <SessionStatusBadge status={session.status} />
+            </div>
+            <p className="text-sm font-medium text-ink-secondary">{session.topic}</p>
+            <p className="flex items-center gap-1.5 text-xs text-ink-muted">
+              <Calendar className="size-3.5 text-ink-muted" aria-hidden />
+              {formatSessionTime(session.startsAt, session.endsAt)}
+            </p>
           </div>
-          <p className="mt-0.5 text-sm text-ink-secondary">{session.topic}</p>
-          <p className="mt-1 flex items-center gap-1 text-xs text-ink-secondary">
-            <Calendar className="size-3.5" aria-hidden />
-            {formatSessionTime(session.startsAt, session.endsAt)}
-          </p>
         </div>
-        <p className="shrink-0 text-sm font-semibold text-ink">{formatPrice(session.price)}</p>
+        <p className="shrink-0 text-base font-semibold text-ink">{formatPrice(session.price)}</p>
       </div>
-      {actions && <div className="mt-3 flex flex-wrap gap-2">{actions}</div>}
+      {actions && (
+        <div className="mt-5 flex flex-wrap items-center gap-3 pt-1">
+          {actions}
+        </div>
+      )}
     </Card>
   );
 }
