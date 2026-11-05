@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Calendar, CheckCircle2 } from 'lucide-react';
 import type { Mentor, Slot } from '@/types';
 import { Button } from '@/components/ui/Button';
@@ -14,12 +14,15 @@ interface BookingPanelProps {
   slots: Slot[];
   // the panel manages its own progress success and failure states around this call
   onBook: (slot: Slot) => Promise<unknown>;
+  // replaces the book button when the viewer cannot book, e.g. signed out or not a student
+  blocked?: ReactNode;
 }
 
 // slot picker then review then confirm then result
-export function BookingPanel({ mentor, slots, onBook }: BookingPanelProps) {
+export function BookingPanel({ mentor, slots, onBook, blocked }: BookingPanelProps) {
   const [selected, setSelected] = useState<Slot | null>(null);
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'failed'>('idle');
+  const [failure, setFailure] = useState<string | null>(null);
   const review = useDisclosure();
 
   async function confirm() {
@@ -30,7 +33,8 @@ export function BookingPanel({ mentor, slots, onBook }: BookingPanelProps) {
       setStatus('sent');
       setSelected(null);
       review.close();
-    } catch {
+    } catch (error) {
+      setFailure(error instanceof Error ? error.message : null);
       setStatus('failed');
     }
   }
@@ -48,20 +52,28 @@ export function BookingPanel({ mentor, slots, onBook }: BookingPanelProps) {
         <p className="mb-3 text-sm text-ink-secondary">Choose an available time. Times are shown in {viewerTimezone()}.</p>
         <SlotLegend statuses={['AVAILABLE', 'HELD', 'BOOKED']} />
 
-        <div className="mt-4 grid grid-cols-2 gap-2">
-          {slots.map((slot) => (
-            <TimeSlot key={slot.id} slot={slot} showDate selected={selected?.id === slot.id} onSelect={setSelected} />
-          ))}
-        </div>
+        {slots.length === 0 ? (
+          <p className="mt-4 rounded-xl bg-surface-subtle p-4 text-sm text-ink-secondary">
+            No free times right now. Check back later or message the mentor.
+          </p>
+        ) : (
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            {slots.map((slot) => (
+              <TimeSlot key={slot.id} slot={slot} showDate selected={selected?.id === slot.id} onSelect={setSelected} />
+            ))}
+          </div>
+        )}
 
         <div className="mt-4 flex justify-between border-t border-line pt-4 text-sm">
           <span className="text-ink-secondary">Session ({sessionLengthLabel()})</span>
           <span className="font-semibold text-ink">{formatPrice(mentor.hourlyRate)}</span>
         </div>
 
-        <Button className="mt-4 w-full" disabled={!selected} onClick={() => { setStatus('idle'); review.open(); }}>
-          {selected ? 'Review booking' : 'Select a time slot'}
-        </Button>
+        {blocked ?? (
+          <Button className="mt-4 w-full" disabled={!selected} onClick={() => { setStatus('idle'); review.open(); }}>
+            {selected ? 'Review booking' : 'Select a time slot'}
+          </Button>
+        )}
       </CardBody>
 
       <ConfirmDialog
@@ -81,7 +93,7 @@ export function BookingPanel({ mentor, slots, onBook }: BookingPanelProps) {
           </dl>
         )}
         {status === 'failed' && (
-          <p role="alert" className="mt-3 text-sm text-accent">The booking could not be sent. Please try again.</p>
+          <p role="alert" className="mt-3 text-sm text-accent">The booking could not be sent. {failure || 'Please try again.'}</p>
         )}
       </ConfirmDialog>
     </Card>

@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { STUDENT_PROFILE } from '@/mocks/users';
-import { emptyExtras } from '@/mocks/profiles';
+import { STUDENT_PROFILE } from '@/test/fixtures';
 import type { ExperienceEntry } from '@/types';
 import {
+  documentError,
+  emptyExtras,
   formatMonth,
   isValidPhone,
   monthSpan,
@@ -85,6 +86,12 @@ describe('links, phone and photo', () => {
     expect(photoError({ type: 'image/png', size: 1000 })).toBeNull();
     expect(photoError({ type: 'image/png', size: 5 * 1024 * 1024 })).toMatch(/under 2 MB/);
     expect(photoError({ type: 'application/pdf', size: 1000 })).toMatch(/JPG/);
+  });
+
+  it('accepts pdf and image documents up to 10 MB', () => {
+    expect(documentError({ type: 'application/pdf', size: 1000 })).toBeNull();
+    expect(documentError({ type: 'image/png', size: 11 * 1024 * 1024 })).toMatch(/under 10 MB/);
+    expect(documentError({ type: 'text/plain', size: 10 })).toMatch(/PDF/);
   });
 });
 

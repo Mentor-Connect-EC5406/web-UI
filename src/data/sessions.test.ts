@@ -1,50 +1,46 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { mentorsApi } from './mentors';
-import { sessionsApi } from './sessions';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { sessionsApi, type BookingResponse } from './sessions';
 
-// runs a mock API call, skipping its simulated network delay
-async function run<T>(call: Promise<T>): Promise<T> {
-  await vi.runAllTimersAsync();
-  return call;
+const booking = (patch: Partial<BookingResponse>): BookingResponse => ({
+  id: 'b1', studentId: 's1', studentName: 'Kasun Fernando', mentorId: 'm1', mentorName: 'Nimal Silva', meetingUrl: null,
+  reviewed: false, scheduledStart: '2026-12-01T04:30:00.000Z', scheduledEnd: '2026-12-01T05:30:00.000Z', topic: null,
+  priceCents: 250000, status: 'PENDING', ...patch,
+});
+
+function respondWith(body: unknown) {
+  const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(body), { status: 200 }));
+  vi.stubGlobal('fetch', fetchMock);
+  return fetchMock;
 }
 
-// attaches the rejection check before the delay runs so the failure is never unhandled
-async function runRejects(call: Promise<unknown>, message?: RegExp) {
-  const check = expect(call).rejects.toThrow(message);
-  await vi.runAllTimersAsync();
-  await check;
-}
+describe('sessionsApi', () => {
+  afterEach(() => vi.unstubAllGlobals());
 
-describe('sessionsApi (mock)', () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date('2026-10-28T09:00:00+05:30'));
-  });
-  afterEach(() => vi.useRealTimers());
-
-  it('moves a session to another free slot and swaps the slot statuses', async () => {
-    await run(sessionsApi.reschedule({ sessionId: 'b1', slotId: 's4' }));
-    const session = (await run(sessionsApi.forStudent())).find((s) => s.id === 'b1');
-    const slots = await run(mentorsApi.slots('mentor-1'));
-    expect(session?.startsAt).toBe('2026-11-04T16:00:00+05:30');
-    expect(slots.find((s) => s.id === 's4')?.status).toBe('BOOKED');
-    expect(slots.find((s) => s.id === 's1')?.status).toBe('AVAILABLE');
+  it('maps bookings to sessions and hides the ones that were replaced', async () => {
+    respondWith({
+      content: [booking({ id: 'old', status: 'RESCHEDULED' }), booking({ id: 'new', status: 'CONFIRMED' }), booking({ id: 'gone', status: 'NO_SHOW' })],
+      page: 0, size: 100, totalElements: 3, totalPages: 1,
+    });
+    const sessions = await sessionsApi.forStudent();
+    expect(sessions.map((s) => [s.id, s.status])).toEqual([['new', 'CONFIRMED'], ['gone', 'CANCELLED']]);
+    expect(sessions[0]).toMatchObject({ price: 2500, topic: 'Mentoring session', startsAt: '2026-12-01T04:30:00.000Z', mentorId: 'm1' });
   });
 
-  it('refuses to move a session inside the change window', async () => {
-    vi.setSystemTime(new Date('2026-11-06T06:00:00+05:30'));
-    await runRejects(sessionsApi.reschedule({ sessionId: 'b2', slotId: 's3' }), /cannot be moved/);
+  it('asks only for pending bookings as requests', async () => {
+    const fetchMock = respondWith({ content: [], page: 0, size: 100, totalElements: 0, totalPages: 0 });
+    await sessionsApi.requests();
+    expect(new URL(fetchMock.mock.calls[0][0]).searchParams.get('status')).toBe('PENDING');
   });
 
-  it('marks the session reviewed and adds the review to the mentor', async () => {
-    const before = await run(mentorsApi.get('mentor-2'));
-    await run(sessionsApi.review({ sessionId: 'b3', rating: 5, text: 'Clear, practical advice on moving into product.' }));
-    const session = (await run(sessionsApi.forStudent())).find((s) => s.id === 'b3');
-    const reviews = await run(mentorsApi.reviews('mentor-2'));
-    const after = await run(mentorsApi.get('mentor-2'));
-    expect(session?.reviewed).toBe(true);
-    expect(reviews[0]).toMatchObject({ author: 'Ashan P.', rating: 5 });
-    expect(after?.reviewCount).toBe((before?.reviewCount ?? 0) + 1);
-    await runRejects(sessionsApi.review({ sessionId: 'b3', rating: 4, text: 'Trying to review the same session twice.' }));
+  it('accepts or declines through separate endpoints', async () => {
+    const fetchMock = respondWith(booking({}));
+    await sessionsApi.respondToRequest({ requestId: 'b1', accept: false });
+    expect(fetchMock.mock.calls[0][0]).toContain('/api/bookings/b1/decline');
+  });
+
+  it('sends the review text as the comment', async () => {
+    const fetchMock = respondWith({});
+    await sessionsApi.review({ sessionId: 'b1', rating: 5, text: '  Great advice for my internship plans.  ' });
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({ rating: 5, comment: 'Great advice for my internship plans.' });
   });
 });

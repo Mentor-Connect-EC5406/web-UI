@@ -62,7 +62,11 @@ function ReviewDialog({ application, deciding, onClose, onDecide }: {
         {application.documents.map((doc) => (
           <li key={doc.name} className="flex items-center gap-2 rounded-xl bg-surface-subtle p-3 text-sm">
             <FileText className="size-4 text-ink-muted" aria-hidden />
-            <span className="font-medium text-ink">{doc.name}</span>
+            {doc.url ? (
+              <a href={doc.url} target="_blank" rel="noreferrer" className="font-medium text-ink underline">{doc.name}</a>
+            ) : (
+              <span className="font-medium text-ink">{doc.name}</span>
+            )}
             <span className="text-ink-secondary">· {doc.type}</span>
           </li>
         ))}

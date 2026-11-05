@@ -1,22 +1,20 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { AlertCircle, Briefcase, GraduationCap } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { useSession } from '@/auth/session';
-import { USE_MOCKS } from '@/config/env';
 import { paths } from '@/app/paths';
 
-// log in hands off to asgardeo, demo mode signs in directly
+// log in hands off to asgardeo
 export default function LoginPage() {
   const signIn = useSession((s) => s.signIn);
-  const signInAs = useSession((s) => s.signInAs);
   const error = useSession((s) => s.error);
   const [leaving, setLeaving] = useState(false);
 
   function handleSignIn() {
     // asgardeo takes over the page, the spinner covers the short wait before it does
-    if (!USE_MOCKS) setLeaving(true);
+    setLeaving(true);
     signIn();
   }
 
@@ -40,16 +38,6 @@ export default function LoginPage() {
         New to MentorConnect?{' '}
         <Link to={paths.signup} className="font-semibold text-ink hover:underline">Create an account</Link>
       </p>
-
-      {import.meta.env.DEV && USE_MOCKS && (
-        <div className="mt-8 border-t border-line pt-6">
-          <p className="mb-3 text-center text-xs text-ink-muted">Demo mode: preview an account without signing in</p>
-          <div className="grid grid-cols-2 gap-3">
-            <Button variant="secondary" size="sm" onClick={() => signInAs('STUDENT')}><GraduationCap /> Student</Button>
-            <Button variant="secondary" size="sm" onClick={() => signInAs('MENTOR')}><Briefcase /> Mentor</Button>
-          </div>
-        </div>
-      )}
     </Card>
   );
 }

@@ -1,112 +1,107 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { parseISO } from 'date-fns';
-import type { Contact, ConversationRecord, ConversationSummary, Mentor } from '@/types';
-import { MESSAGE_MAX_LENGTH } from '@/config/constants';
-import { db, mutate, respond } from './mockServer';
+import type { Contact, ConversationSummary, Message, Role } from '@/types';
+import { fileUrl } from '@/config/env';
+import { mentorsApi, toMentor, type MentorSummaryResponse } from './mentors';
+import { sessionsApi } from './sessions';
+import { api, listAll } from './http';
 import { keys } from './keys';
 
-const time = (iso: string) => parseISO(iso).getTime();
-
-function summarize(c: ConversationRecord, userId: string): ConversationSummary {
-  const other = c.participants.find((p) => p.id !== userId) ?? c.participants[0];
-  const lastRead = c.lastReadAt[userId];
-  return {
-    id: c.id,
-    with: other,
-    lastMessage: c.messages.at(-1) ?? null,
-    unreadCount: c.messages.filter((m) => m.senderId !== userId && (!lastRead || time(m.sentAt) > time(lastRead))).length,
-  };
+interface ConversationResponse {
+  id: string;
+  with: { id: string; name: string; role: Role; profileImageKey: string | null } | null;
+  lastMessage: { content: string; sentAt: string } | null;
+  unreadCount: number;
 }
 
-const lastActivity = (c: ConversationSummary) => (c.lastMessage ? time(c.lastMessage.sentAt) : 0);
+interface MessageResponse {
+  id: string;
+  senderId: string;
+  content: string;
+  sentAt: string;
+}
 
-const findConversation = (conversationId: string) => {
-  const c = db.conversations.find((x) => x.id === conversationId);
-  if (!c) throw new Error('This conversation no longer exists.');
-  return c;
-};
-
-const mentorContact = (m: Mentor): Contact => ({
-  id: m.id,
-  name: m.name,
-  role: 'MENTOR',
-  avatarUrl: m.avatarUrl,
-  headline: `${m.title} at ${m.organization}`,
+// the api does not say who sent the last message, so the inbox does not prefix it with "You"
+const toSummary = (c: ConversationResponse & { with: NonNullable<ConversationResponse['with']> }): ConversationSummary => ({
+  id: c.id,
+  with: { id: c.with.id, name: c.with.name, role: c.with.role, avatarUrl: fileUrl(c.with.profileImageKey) },
+  lastMessage: c.lastMessage && { id: `${c.id}-last`, senderId: '', text: c.lastMessage.content, sentAt: c.lastMessage.sentAt },
+  unreadCount: c.unreadCount,
 });
 
-// students reach every mentor in the directory, mentors reach students
-function contactsFor(userId: string): Contact[] {
-  const mentors = db.mentors.map(mentorContact);
-  const students = db.contacts.filter((p) => p.role === 'STUDENT').map((p) => ({ ...p, headline: 'Student' }));
-  const isMentor = mentors.some((m) => m.id === userId);
-  return (isMentor ? students : mentors).filter((p) => p.id !== userId);
+const toMessage = (m: MessageResponse): Message => ({ id: m.id, senderId: m.senderId, text: m.content, sentAt: m.sentAt });
+
+const CONTACT_SEARCH_SIZE = 20;
+
+async function mentorContacts(query: string): Promise<Contact[]> {
+  const list = await listAll<MentorSummaryResponse>('/api/mentors', { query: query.trim(), size: CONTACT_SEARCH_SIZE });
+  return list.map(toMentor).map((m) => ({
+    id: m.id,
+    mentorId: m.id,
+    name: m.name,
+    role: 'MENTOR',
+    avatarUrl: m.avatarUrl,
+    headline: [m.title, m.organization].filter(Boolean).join(' at '),
+  }));
 }
 
-const findPerson = (id: string) => db.contacts.find((p) => p.id === id) ?? db.mentors.map(mentorContact).find((m) => m.id === id);
+// mentors can message the students who booked them
+async function studentContacts(query: string): Promise<Contact[]> {
+  const sessions = await sessionsApi.forMentor();
+  const q = query.trim().toLowerCase();
+  const byId = new Map<string, Contact>();
+  for (const s of sessions) {
+    if (s.studentId && !byId.has(s.studentId)) {
+      byId.set(s.studentId, { id: s.studentId, name: s.studentName, role: 'STUDENT', avatarUrl: null, headline: 'Student' });
+    }
+  }
+  return [...byId.values()].filter((p) => !q || p.name.toLowerCase().includes(q));
+}
 
-// replace each function body with a real API call of the same signature
 export const messagesApi = {
   // newest activity first
-  conversations: (userId: string) =>
-    respond(() =>
-      db.conversations
-        .filter((c) => c.participants.some((p) => p.id === userId))
-        .map((c) => summarize(c, userId))
-        .sort((a, b) => lastActivity(b) - lastActivity(a)),
+  conversations: () =>
+    api<ConversationResponse[]>('/api/conversations').then((list) =>
+      list
+        .filter((c): c is ConversationResponse & { with: NonNullable<ConversationResponse['with']> } => c.with !== null)
+        .map(toSummary)
+        .sort((a, b) => (b.lastMessage?.sentAt ?? '').localeCompare(a.lastMessage?.sentAt ?? '')),
     ),
 
-  // people the user can message, filtered by name or headline
-  contacts: (userId: string, query: string) =>
-    respond(() => {
-      const q = query.trim().toLowerCase();
-      return contactsFor(userId).filter((p) => !q || `${p.name} ${p.headline}`.toLowerCase().includes(q));
-    }),
+  // students reach mentors, mentors reach their students
+  contacts: (role: Role | undefined, query: string) => {
+    if (role === 'STUDENT') return mentorContacts(query);
+    if (role === 'MENTOR') return studentContacts(query);
+    return Promise.resolve<Contact[]>([]);
+  },
 
-  messages: (conversationId: string) => respond(() => findConversation(conversationId).messages),
+  // the api returns the newest page first, the thread reads oldest to newest
+  messages: (conversationId: string) =>
+    listAll<MessageResponse>(`/api/conversations/${conversationId}/messages`).then((list) => list.map(toMessage).reverse()),
 
-  send: ({ conversationId, senderId, text }: { conversationId: string; senderId: string; text: string }) =>
-    mutate(() => {
-      const body = text.trim();
-      if (!body) throw new Error('Write a message first.');
-      if (body.length > MESSAGE_MAX_LENGTH) throw new Error(`Messages can be up to ${MESSAGE_MAX_LENGTH} characters.`);
-      const c = findConversation(conversationId);
-      const sentAt = new Date().toISOString();
-      c.messages = [...c.messages, { id: `${conversationId}-${Date.now()}`, senderId, text: body, sentAt }];
-      // sending a reply means the sender has seen everything before it
-      c.lastReadAt = { ...c.lastReadAt, [senderId]: sentAt };
-    }),
+  send: ({ conversationId, text }: { conversationId: string; senderId: string; text: string }) =>
+    api<MessageResponse>(`/api/conversations/${conversationId}/messages`, { method: 'POST', body: { content: text.trim() } }),
 
-  markRead: ({ conversationId, userId }: { conversationId: string; userId: string }) =>
-    mutate(() => {
-      const c = findConversation(conversationId);
-      const last = c.messages.at(-1);
-      if (last) c.lastReadAt = { ...c.lastReadAt, [userId]: last.sentAt };
-    }),
+  markRead: ({ conversationId }: { conversationId: string; userId: string }) =>
+    api<void>(`/api/conversations/${conversationId}/read`, { method: 'PUT' }),
 
-  // returns the existing conversation between the two people or creates an empty one
-  start: ({ userId, otherId }: { userId: string; otherId: string }) =>
-    respond(() => {
-      const existing = db.conversations.find((c) => [userId, otherId].every((id) => c.participants.some((p) => p.id === id)));
-      if (existing) return existing.id;
-      const [me, other] = [userId, otherId].map(findPerson);
-      if (!me || !other) throw new Error('This person cannot be messaged yet.');
-      // stored participants never carry the search headline
-      const participants = [me, other].map(({ id, name, role, avatarUrl }) => ({ id, name, role, avatarUrl }));
-      const id = `c-${Date.now()}`;
-      db.conversations = [...db.conversations, { id, participants, messages: [], lastReadAt: {} }];
-      return id;
-    }),
+  // returns the existing conversation with the person or creates one, mentors are looked up by their account id
+  start: async ({ otherId, mentorId }: { userId: string; otherId: string; mentorId?: string }) => {
+    const participantId = mentorId ? (await mentorsApi.get(mentorId))?.userId : otherId;
+    if (!participantId) throw new Error('This person cannot be messaged right now.');
+    const conversation = await api<ConversationResponse>('/api/conversations', { method: 'POST', body: { participantId } });
+    return conversation.id;
+  },
 };
 
 export const useConversations = (userId: string) =>
-  useQuery({ queryKey: keys.conversations(userId), queryFn: () => messagesApi.conversations(userId), enabled: !!userId });
+  useQuery({ queryKey: keys.conversations(userId), queryFn: messagesApi.conversations, enabled: !!userId });
 
 // keeps the last results on screen while the next search loads
-export const useContacts = (userId: string, query: string, enabled = true) =>
+export const useContacts = (role: Role | undefined, query: string, enabled = true) =>
   useQuery({
-    queryKey: keys.contacts(userId, query),
-    queryFn: () => messagesApi.contacts(userId, query),
-    enabled: enabled && !!userId,
+    queryKey: keys.contacts(role, query),
+    queryFn: () => messagesApi.contacts(role, query),
+    enabled: enabled && !!role,
     placeholderData: keepPreviousData,
   });
 

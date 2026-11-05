@@ -1,7 +1,5 @@
-import { Link } from 'react-router-dom';
 import { ArrowDown, Briefcase, GraduationCap, type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/cn';
-import { paths } from '@/app/paths';
 
 const JOURNEY: { icon?: LucideIcon; title: string; text: string }[] = [
   { icon: GraduationCap, title: 'University', text: 'Lectures, projects and exams' },
@@ -47,7 +45,12 @@ function GapBridge() {
  * Features a warm brand yellow background, bold typography with left/right spacing,
  * single-line "between university and", and matching border colors on all 3 flowchart cards.
  */
-export function HeroSection() {
+interface HeroSectionProps {
+  onLogIn: () => void;
+  onGetStarted: () => void;
+}
+
+export function HeroSection({ onLogIn, onGetStarted }: HeroSectionProps) {
   return (
     <section className="bg-[#f8d24d] px-6 py-12 sm:px-10 lg:px-14 lg:py-16">
       <div className="mx-auto flex w-full max-w-7xl flex-col items-start justify-between gap-12 lg:flex-row lg:items-center">
@@ -63,18 +66,20 @@ export function HeroSection() {
           </p>
 
           <div className="mt-8 flex flex-wrap items-center gap-4">
-            <Link
-              to={paths.login}
+            <button
+              type="button"
+              onClick={onLogIn}
               className="inline-flex min-w-[120px] items-center justify-center rounded-full bg-white px-8 py-3 text-base font-semibold text-ink shadow-sm transition hover:bg-neutral-100"
             >
               Login
-            </Link>
-            <Link
-              to={paths.signup}
+            </button>
+            <button
+              type="button"
+              onClick={onGetStarted}
               className="inline-flex min-w-[120px] items-center justify-center rounded-full bg-white px-8 py-3 text-base font-semibold text-ink shadow-sm transition hover:bg-neutral-100"
             >
               Get Start
-            </Link>
+            </button>
           </div>
         </div>
 
