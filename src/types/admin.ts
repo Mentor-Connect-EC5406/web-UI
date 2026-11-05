@@ -9,7 +9,8 @@ export interface MentorApplication {
   industry: string;
   experienceYears: number;
   submittedAt: string;
-  documents: { name: string; type: string }[];
+  // url is a short lived download link
+  documents: { name: string; type: string; url: string | null }[];
 }
 
 export type ReportStatus = 'OPEN' | 'UNDER_REVIEW' | 'RESOLVED' | 'DISMISSED';

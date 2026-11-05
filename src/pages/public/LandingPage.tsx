@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { ArrowRight, CheckCircle2 } from 'lucide-react';
 import { HeroSection } from '@/components/landing/HeroSection';
 import { LandingSection } from '@/components/landing/LandingSection';
@@ -7,7 +7,7 @@ import { MentorSearchSection } from '@/components/landing/MentorSearchSection';
 import { ServicesSection } from '@/components/landing/ServicesSection';
 import { useInView } from '@/hooks/useInView';
 import { cn } from '@/lib/cn';
-import { paths } from '@/app/paths';
+import { useAuthRedirect } from '@/auth/useAuthRedirect';
 
 const STEPS = [
   { title: 'Find your mentor', text: 'Search by skill or industry and compare mentor profiles.' },
@@ -20,6 +20,7 @@ const MENTOR_BENEFITS = ['Flexible schedule', 'Set your own rate', 'Make a real 
 /** Public home page matching the modern design specifications. */
 export default function LandingPage() {
   const { hash } = useLocation();
+  const { logIn, signUp } = useAuthRedirect();
   const { ref: stepsRef, isInView: stepsInView } = useInView({ threshold: 0.15 });
 
   // Scroll to "#how-it-works" when arriving from a nav link
@@ -29,7 +30,7 @@ export default function LandingPage() {
 
   return (
     <>
-      <HeroSection />
+      <HeroSection onLogIn={logIn} onGetStarted={() => signUp()} />
 
       <ServicesSection />
 
@@ -95,12 +96,13 @@ export default function LandingPage() {
             <h3 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
               Ready to inspire the next generation?
             </h3>
-            <Link
-              to={paths.mentorRegistration}
+            <button
+              type="button"
+              onClick={() => signUp('MENTOR')}
               className="inline-flex items-center gap-2 rounded-full bg-brand px-6 py-2.5 text-sm font-semibold text-ink shadow-2xs transition hover:bg-brand-hover"
             >
               Become a mentor <ArrowRight className="size-4" />
-            </Link>
+            </button>
           </div>
         </div>
       </section>

@@ -56,6 +56,13 @@ const FALLBACK_MESSAGES: Record<number, string> = {
   409: 'This was changed by someone else. Refresh and try again.',
 };
 
+// "experience.0.startMonth" + "must be YYYY-MM" reads as "Start month must be YYYY-MM"
+export function describeFieldError({ field, message }: FieldError) {
+  const name = field.split('.').filter((part) => !/^\d+$/.test(part)).pop() ?? '';
+  const words = name.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase();
+  return words ? `${words[0].toUpperCase()}${words.slice(1)} ${message}` : message;
+}
+
 async function toError(response: Response) {
   let body: { message?: string; fieldErrors?: FieldError[] } = {};
   try {
@@ -66,7 +73,7 @@ async function toError(response: Response) {
   const fieldErrors = body.fieldErrors ?? [];
   // validation errors say "Validation failed", the first field message is more useful
   const message =
-    (fieldErrors.length > 0 ? fieldErrors[0].message : body.message) ||
+    (fieldErrors.length > 0 ? describeFieldError(fieldErrors[0]) : body.message) ||
     FALLBACK_MESSAGES[response.status] ||
     'Something went wrong on the server. Please try again.';
   return new ApiError(message, response.status, fieldErrors);
@@ -108,4 +115,23 @@ export interface Page<T> {
   size: number;
   totalElements: number;
   totalPages: number;
+}
+
+// screens filter and page on the client, so lists ask for the largest page the api allows
+const MAX_PAGE_SIZE = 100;
+
+export const listAll = <T>(path: string, query: Record<string, QueryValue> = {}) =>
+  api<Page<T>>(path, { query: { size: MAX_PAGE_SIZE, ...query } }).then((p) => p.content);
+
+export interface UploadTarget {
+  uploadUrl: string;
+  key: string;
+  expiresInSeconds: number;
+}
+
+// asks the api where to put the file, uploads it and returns the storage key to save
+export async function uploadFile(uploadUrlPath: string, file: Blob) {
+  const target = await api<UploadTarget>(uploadUrlPath, { method: 'POST', body: { contentType: file.type } });
+  await uploadToSignedUrl(target.uploadUrl, file);
+  return target.key;
 }

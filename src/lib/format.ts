@@ -17,6 +17,13 @@ export const viewerTimezone = () => Intl.DateTimeFormat().resolvedOptions().time
 // output example "LKR 2,500"
 export const formatPrice = (amount: number) => `${CURRENCY} ${amount.toLocaleString('en-LK')}`;
 
+// the api keeps money in cents, the UI shows whole amounts
+export const fromCents = (cents: number) => cents / 100;
+export const toCents = (amount: number) => Math.round(amount * 100);
+
+// the api average can have two decimals, cards show one
+export const roundRating = (rating: number) => Math.round(rating * 10) / 10;
+
 // output example "1 hour" or "45 minutes"
 export const sessionLengthLabel = () =>
   SESSION_LENGTH_MINUTES % 60 === 0

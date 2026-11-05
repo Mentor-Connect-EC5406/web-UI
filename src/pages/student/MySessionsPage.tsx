@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { parseISO } from 'date-fns';
 import { Calendar, CalendarClock, CheckCircle2, Star, Video, X } from 'lucide-react';
 import type { Session, SessionStatus } from '@/types';
 import { Badge } from '@/components/ui/Badge';
@@ -14,7 +15,7 @@ import { RescheduleDialog } from '@/components/booking/RescheduleDialog';
 import { ReviewDialog } from '@/components/booking/ReviewDialog';
 import { SessionCard } from '@/components/booking/SessionCard';
 import { useMentorSlots } from '@/data/mentors';
-import { useCancelSession, useRescheduleSession, useReviewSession, useStudentSessions } from '@/data/sessions';
+import { useCancelSession, useCompleteSession, useRescheduleSession, useReviewSession, useStudentSessions } from '@/data/sessions';
 import { CANCELLATION_WINDOW_HOURS } from '@/config/constants';
 import { paths } from '@/app/paths';
 
@@ -23,6 +24,9 @@ const TABS: { key: string; label: string; statuses: SessionStatus[] }[] = [
   { key: 'completed', label: 'Completed', statuses: ['COMPLETED'] },
   { key: 'cancelled', label: 'Cancelled', statuses: ['CANCELLED'] },
 ];
+
+// the api only lets a student complete a session once it has started
+const hasStarted = (session: Session) => parseISO(session.startsAt).getTime() <= Date.now();
 
 // loads the mentor's slots only while the dialog is open
 function RescheduleSession({ session, onDone, onClose }: { session: Session; onDone: () => void; onClose: () => void }) {
@@ -45,6 +49,7 @@ export default function MySessionsPage() {
   const sessions = useStudentSessions();
   const cancel = useCancelSession();
   const review = useReviewSession();
+  const complete = useCompleteSession();
   const [cancelling, setCancelling] = useState<Session | null>(null);
   const [moving, setMoving] = useState<Session | null>(null);
   const [reviewing, setReviewing] = useState<Session | null>(null);
@@ -65,10 +70,23 @@ export default function MySessionsPage() {
     );
   }
 
+  function markCompleted(session: Session) {
+    setNotice(null);
+    complete.mutate(session.id, {
+      onSuccess: () => setNotice(`Your session with ${session.mentorName} is marked as completed. You can review it under Completed.`),
+    });
+  }
+
   function sessionActions(tab: string, session: Session) {
     if (tab === 'upcoming') {
+      const completing = complete.isPending && complete.variables === session.id;
       return (
         <>
+          {session.status === 'CONFIRMED' && hasStarted(session) && (
+            <Button size="sm" loading={completing} disabled={complete.isPending} onClick={() => markCompleted(session)}>
+              <CheckCircle2 /> Mark as completed
+            </Button>
+          )}
           {session.meetingUrl && (
             <Button asChild size="sm">
               <a href={session.meetingUrl} target="_blank" rel="noreferrer"><Video /> Join</a>
@@ -105,6 +123,7 @@ export default function MySessionsPage() {
           {notice}
         </p>
       )}
+      {complete.error && <p role="alert" className="mb-4 rounded-xl bg-accent-soft p-3 text-sm text-accent">{complete.error.message}</p>}
 
       <AsyncContent query={sessions} loading={<ListSkeleton rows={3} />}>
         {(list) => (

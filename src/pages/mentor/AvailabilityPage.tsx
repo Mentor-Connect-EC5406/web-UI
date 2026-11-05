@@ -8,15 +8,13 @@ import { ListSkeleton } from '@/components/common/ListSkeleton';
 import { PageHeader } from '@/components/common/PageHeader';
 import { AddSlotDialog } from '@/components/booking/AddSlotDialog';
 import { SlotLegend, TimeSlot } from '@/components/booking/TimeSlot';
-import { useSession } from '@/auth/session';
-import { useAddSlot, useMentorSlots, useRemoveSlot } from '@/data/mentors';
+import { useAddSlot, useMySlots, useRemoveSlot } from '@/data/mentors';
 import { useDisclosure } from '@/hooks/useDisclosure';
 import { formatDate, formatSessionTime, viewerTimezone } from '@/lib/format';
 
 // upcoming slots grouped by day, available and blocked slots can be removed
 export default function AvailabilityPage() {
-  const user = useSession((s) => s.user);
-  const slots = useMentorSlots(user?.id ?? '');
+  const slots = useMySlots();
   const removeSlot = useRemoveSlot();
   const addSlot = useAddSlot();
   const dialog = useDisclosure();
