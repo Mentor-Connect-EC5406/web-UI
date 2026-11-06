@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { ROLE_LABELS } from '@/config/options';
 import { cn } from '@/lib/cn';
 import { formatDateTime } from '@/lib/format';
+import { LinkifiedText } from './LinkifiedText';
 
 interface MessageThreadProps {
   participant: Participant;
@@ -59,7 +60,7 @@ export function MessageThread({ participant, messages, currentUserId, onBack, st
                         mine ? 'rounded-br-md bg-brand-soft text-ink' : 'rounded-bl-md border border-line bg-surface text-ink',
                       )}
                     >
-                      {m.text}
+                      <LinkifiedText text={m.text} />
                     </p>
                     <span className="mt-1 text-[11px] text-ink-muted">{formatDateTime(m.sentAt)}</span>
                   </li>

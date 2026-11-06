@@ -46,4 +46,15 @@ describe('BookingPanel', () => {
     expect(await screen.findByText(/Slot is not available/)).toBeTruthy();
     expect(onBook).toHaveBeenCalledWith(slot, 'CV review');
   });
+
+  it('opens with the time a mentor invited the student to', () => {
+    render(<BookingPanel mentor={mentor} slots={[slot]} onBook={vi.fn()} invitedSlotId="s1" now={now} />);
+    expect(screen.getByText(/invited you to the time selected below/)).toBeTruthy();
+    expect(screen.getByRole('button', { name: /review booking/i })).toBeTruthy();
+  });
+
+  it('says when the invited time is gone', () => {
+    render(<BookingPanel mentor={mentor} slots={[{ ...slot, status: 'BOOKED' }]} onBook={vi.fn()} invitedSlotId="s1" now={now} />);
+    expect(screen.getByText(/no longer free/)).toBeTruthy();
+  });
 });
