@@ -41,7 +41,7 @@ export default function MentorDashboardPage() {
         <StatCard label="Upcoming sessions" value={upcoming?.length ?? '–'} className="animate-card-down [animation-delay:0.04s]" />
         <StatCard label="Pending requests" value={requests.data?.length ?? '–'} className="animate-card-up [animation-delay:0.10s]" />
         <StatCard label="Students mentored" value={sessions.data ? mentoredStudents(sessions.data).length : '–'} className="animate-card-down [animation-delay:0.16s]" />
-        <StatCard label="Average rating" value="4.8" className="animate-card-up [animation-delay:0.22s]" />
+        <StatCard label="Average rating" value={rating ?? '–'} className="animate-card-up [animation-delay:0.22s]" />
       </div>
 
       {needsVerification && (
