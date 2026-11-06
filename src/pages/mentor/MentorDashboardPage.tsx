@@ -8,7 +8,9 @@ import { ListSkeleton } from '@/components/common/ListSkeleton';
 import { PageHeader } from '@/components/common/PageHeader';
 import { PersonRow } from '@/components/common/PersonRow';
 import { StatCard } from '@/components/common/StatCard';
+import { VerificationCard } from '@/components/mentor/VerificationCard';
 import { useSession } from '@/auth/session';
+import { useMyMentorProfile, useMyVerifications, useSubmitVerification } from '@/data/mentors';
 import { useBookingRequests, useMentorSessions, useRespondToRequest } from '@/data/sessions';
 import { firstName, formatDate, formatSessionTime, formatTime } from '@/lib/format';
 import { isUpcoming, mentoredStudents } from '@/lib/sessions';
@@ -20,8 +22,12 @@ export default function MentorDashboardPage() {
   const sessions = useMentorSessions();
   const requests = useBookingRequests();
   const respond = useRespondToRequest();
-  // the mock has no notion of today so upcoming sessions stand in for it
+  const profile = useMyMentorProfile();
+  const verifications = useMyVerifications();
+  const submitVerification = useSubmitVerification();
   const upcoming = sessions.data?.filter(isUpcoming);
+  const rating = profile.data && (profile.data.reviewCount > 0 ? profile.data.rating.toFixed(1) : 'No reviews');
+  const needsVerification = profile.data && profile.data.verificationStatus !== 'APPROVED' && verifications.data;
 
   return (
     <div className="space-y-6">
@@ -35,8 +41,17 @@ export default function MentorDashboardPage() {
         <StatCard label="Upcoming sessions" value={upcoming?.length ?? '–'} className="animate-card-down [animation-delay:0.04s]" />
         <StatCard label="Pending requests" value={requests.data?.length ?? '–'} className="animate-card-up [animation-delay:0.10s]" />
         <StatCard label="Students mentored" value={sessions.data ? mentoredStudents(sessions.data).length : '–'} className="animate-card-down [animation-delay:0.16s]" />
-        <StatCard label="Average rating" value="4.8" className="animate-card-up [animation-delay:0.22s]" />
+        <StatCard label="Average rating" value={rating ?? '–'} className="animate-card-up [animation-delay:0.22s]" />
       </div>
+
+      {needsVerification && (
+        <VerificationCard
+          latest={verifications.data?.[0]}
+          uploading={submitVerification.isPending}
+          error={submitVerification.error?.message}
+          onUpload={(file) => submitVerification.mutate(file)}
+        />
+      )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card>
