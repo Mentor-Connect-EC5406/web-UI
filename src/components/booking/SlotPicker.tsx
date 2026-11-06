@@ -22,10 +22,12 @@ export function SlotPicker({ slots, selectedId, onSelect, isPickable, emptyMessa
   const byDay = groupByDay(open, (s) => s.startsAt);
   const firstWeek = startOfWeekOf(open.length ? parseISO(open[0].startsAt) : now);
   const lastWeek = startOfWeekOf(open.length ? parseISO(open[open.length - 1].startsAt) : now);
-  const [weekStart, setWeekStart] = useState(firstWeek);
+  // a time chosen before opening, e.g. from an invitation, opens on its week and day
+  const preselected = open.find((s) => s.id === selectedId);
+  const [weekStart, setWeekStart] = useState(() => (preselected ? startOfWeekOf(parseISO(preselected.startsAt)) : firstWeek));
   const days = weekDays(weekStart);
   const firstDayWithSlots = (week: Date[]) => week.find((d) => byDay.has(dayKey(d)));
-  const [dayChoice, setDayChoice] = useState<string | null>(null);
+  const [dayChoice, setDayChoice] = useState<string | null>(() => (preselected ? dayKey(preselected.startsAt) : null));
   // the chosen day only counts while it is in the visible week
   const visibleDay = days.find((d) => dayKey(d) === dayChoice) ?? firstDayWithSlots(days);
   const times = visibleDay ? byDay.get(dayKey(visibleDay)) ?? [] : [];

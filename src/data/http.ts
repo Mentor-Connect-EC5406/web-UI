@@ -21,13 +21,20 @@ export class ApiError extends Error {
 export const isApiError = (error: unknown, status?: number): error is ApiError =>
   error instanceof ApiError && (status === undefined || error.status === status);
 
-type TokenProvider = () => Promise<string | null>;
+// refresh asks the identity provider for a new token instead of the stored one
+type TokenProvider = (options?: { refresh?: boolean }) => Promise<string | null>;
 
 let getToken: TokenProvider = async () => null;
+let onSessionExpired: () => void = () => {};
 
 // the auth layer registers how to get the current access token
 export function setAccessTokenProvider(provider: TokenProvider) {
   getToken = provider;
+}
+
+// called when a request is still refused after a token refresh
+export function setSessionExpiredHandler(handler: () => void) {
+  onSessionExpired = handler;
 }
 
 type QueryValue = string | number | boolean | null | undefined | readonly (string | number)[];
@@ -79,17 +86,25 @@ async function toError(response: Response) {
   return new ApiError(message, response.status, fieldErrors);
 }
 
-export async function api<T>(path: string, { method = 'GET', body, query }: RequestOptions = {}): Promise<T> {
+async function send(path: string, { method = 'GET', body, query }: RequestOptions, token: string | null) {
   const headers: Record<string, string> = { Accept: 'application/json' };
   if (body !== undefined) headers['Content-Type'] = 'application/json';
-  const token = await getToken();
   if (token) headers.Authorization = `Bearer ${token}`;
-
-  let response: Response;
   try {
-    response = await fetch(buildUrl(path, query), { method, headers, body: body === undefined ? undefined : JSON.stringify(body) });
+    return await fetch(buildUrl(path, query), { method, headers, body: body === undefined ? undefined : JSON.stringify(body) });
   } catch {
     throw new ApiError('The server could not be reached. Check your connection and try again.', 0);
+  }
+}
+
+export async function api<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  let response = await send(path, options, await getToken());
+
+  // access tokens expire after about an hour, so a refused request gets one retry with a fresh token
+  if (response.status === 401) {
+    const fresh = await getToken({ refresh: true });
+    if (fresh) response = await send(path, options, fresh);
+    if (response.status === 401) onSessionExpired();
   }
 
   if (!response.ok) throw await toError(response);

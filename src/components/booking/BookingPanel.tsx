@@ -21,12 +21,15 @@ interface BookingPanelProps {
   blocked?: ReactNode;
   // where the booked session can be followed
   sessionsHref?: string;
+  // the time a mentor invited the student to, chosen up front
+  invitedSlotId?: string | null;
   now?: Date;
 }
 
 // day, then time, then review with a topic, then confirm, then result
-export function BookingPanel({ mentor, slots, onBook, blocked, sessionsHref, now }: BookingPanelProps) {
-  const [selected, setSelected] = useState<Slot | null>(null);
+export function BookingPanel({ mentor, slots, onBook, blocked, sessionsHref, invitedSlotId, now }: BookingPanelProps) {
+  const invited = invitedSlotId ? slots.find((s) => s.id === invitedSlotId && s.status === 'AVAILABLE') ?? null : null;
+  const [selected, setSelected] = useState<Slot | null>(invited);
   const [topic, setTopic] = useState('');
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'failed'>('idle');
   const [failure, setFailure] = useState<string | null>(null);
@@ -59,6 +62,14 @@ export function BookingPanel({ mentor, slots, onBook, blocked, sessionsHref, now
               {sessionsHref && <> <Link to={sessionsHref} className="font-semibold underline">Follow it in My sessions</Link>.</>}
             </p>
           </div>
+        )}
+
+        {invitedSlotId && status === 'idle' && (
+          <p className="mb-4 rounded-xl bg-brand-soft p-3 text-sm text-ink">
+            {invited
+              ? `${mentor.name} invited you to the time selected below. Review it and send the request.`
+              : `The time ${mentor.name} invited you to is no longer free. Pick another time or message ${mentor.name}.`}
+          </p>
         )}
 
         <SlotPicker

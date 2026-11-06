@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { Briefcase, CheckCircle2, Handshake, MapPin, UserX } from 'lucide-react';
 import type { Mentor, Role } from '@/types';
 import { Avatar } from '@/components/ui/Avatar';
@@ -22,6 +22,7 @@ import { useRequestMentorship } from '@/data/mentorships';
 import { useBookSession } from '@/data/sessions';
 import { isFeatureOn } from '@/config/features';
 import { paths } from '@/app/paths';
+import { INVITE_SLOT_PARAM } from '@/lib/invitations';
 import { formatPrice } from '@/lib/format';
 import { useAuthRedirect } from '@/auth/useAuthRedirect';
 
@@ -132,6 +133,7 @@ function MentorshipRequestCard({ mentor }: { mentor: Mentor }) {
 // mentor profile with about tab, reviews tab and booking panel
 export default function MentorProfilePage({ backPath }: MentorProfilePageProps) {
   const { id = '' } = useParams();
+  const invitedSlotId = useSearchParams()[0].get(INVITE_SLOT_PARAM);
   const user = useSession((s) => s.user);
   const mentorQuery = useMentor(id);
   const slots = useMentorSlots(id);
@@ -179,6 +181,7 @@ export default function MentorProfilePage({ backPath }: MentorProfilePageProps) 
                       onBook={(slot, topic) => book.mutateAsync({ slotId: slot.id, topic })}
                       blocked={bookingBlocked(user?.role, logIn)}
                       sessionsHref={user?.role === 'STUDENT' ? paths.student.sessions : undefined}
+                      invitedSlotId={invitedSlotId}
                     />
                   )}
                 </AsyncContent>

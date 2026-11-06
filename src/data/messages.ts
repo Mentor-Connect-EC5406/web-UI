@@ -132,6 +132,25 @@ export function useMarkConversationRead() {
   });
 }
 
+// opens or reuses the conversation and posts the invitation, returns the conversation id
+async function sendToPerson({ userId, otherId, text }: { userId: string; otherId: string; text: string }) {
+  const conversationId = await messagesApi.start({ userId, otherId });
+  await messagesApi.send({ conversationId, senderId: userId, text });
+  return conversationId;
+}
+
+export function useSendToPerson() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: sendToPerson,
+    onSuccess: (conversationId) =>
+      Promise.all([
+        client.invalidateQueries({ queryKey: keys.messages(conversationId) }),
+        client.invalidateQueries({ queryKey: ['conversations'] }),
+      ]),
+  });
+}
+
 export function useStartConversation() {
   const client = useQueryClient();
   return useMutation({

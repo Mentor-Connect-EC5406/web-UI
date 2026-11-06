@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { useSession } from '@/auth/session';
+import { rememberReturnPath, useSession } from '@/auth/session';
 import { paths } from '@/app/paths';
 
 // log in hands off to asgardeo
@@ -14,9 +14,12 @@ export default function LoginPage() {
   const checking = useSession((s) => s.status === 'loading');
   const [leaving, setLeaving] = useState(false);
 
+  const from = (useLocation().state as { from?: string } | null)?.from ?? null;
+
   function handleSignIn() {
     // asgardeo takes over the page, the spinner covers the short wait before it does
     setLeaving(true);
+    rememberReturnPath(from);
     signIn();
   }
 

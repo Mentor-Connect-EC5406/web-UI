@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { ApiError, api, describeFieldError, setAccessTokenProvider } from './http';
+import { ApiError, api, describeFieldError, setAccessTokenProvider, setSessionExpiredHandler } from './http';
 
 function respondWith(status: number, body?: unknown) {
   const fetchMock = vi.fn().mockResolvedValue(
@@ -51,5 +51,35 @@ describe('api client', () => {
   it('explains when the server cannot be reached', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
     await expect(api('/api/health')).rejects.toMatchObject({ status: 0, message: expect.stringMatching(/could not be reached/) });
+  });
+});
+
+describe('expired access tokens', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    setAccessTokenProvider(async () => null);
+    setSessionExpiredHandler(() => {});
+  });
+
+  const reply = (status: number, body: unknown = {}) => new Response(JSON.stringify(body), { status });
+
+  it('refreshes the token and retries once after a 401', async () => {
+    const provider = vi.fn(async ({ refresh }: { refresh?: boolean } = {}) => (refresh ? 'fresh' : 'stale'));
+    setAccessTokenProvider(provider);
+    const fetchMock = vi.fn().mockResolvedValueOnce(reply(401, { message: 'Token expired' })).mockResolvedValueOnce(reply(200, { ok: true }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(api('/api/users/me')).resolves.toEqual({ ok: true });
+    expect(fetchMock.mock.calls[1][1].headers.Authorization).toBe('Bearer fresh');
+  });
+
+  it('reports an expired session when the retry is refused too', async () => {
+    const expired = vi.fn();
+    setAccessTokenProvider(async () => 'token');
+    setSessionExpiredHandler(expired);
+    vi.stubGlobal('fetch', vi.fn().mockImplementation(async () => reply(401, { message: 'Missing bearer token' })));
+
+    await expect(api('/api/mentors/me')).rejects.toMatchObject({ status: 401 });
+    expect(expired).toHaveBeenCalledOnce();
   });
 });
