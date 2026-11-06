@@ -13,6 +13,7 @@ export function useProfileForm<T extends object, E extends object>(
   const [values, setValues] = useState(initial);
   const [submitted, setSubmitted] = useState(false);
   const [status, setStatus] = useState<SaveStatus>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const errors = submitted ? validate(values) : ({} as E);
   const dirty = JSON.stringify(values) !== JSON.stringify(baseline);
@@ -42,10 +43,11 @@ export function useProfileForm<T extends object, E extends object>(
       await onSave(saving);
       setBaseline(saving);
       setStatus('saved');
-    } catch {
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : null);
       setStatus('error');
     }
   }
 
-  return { values, saved: baseline, set, errors, dirty, status, discard, handleSubmit };
+  return { values, saved: baseline, set, errors, dirty, status, errorMessage, discard, handleSubmit };
 }

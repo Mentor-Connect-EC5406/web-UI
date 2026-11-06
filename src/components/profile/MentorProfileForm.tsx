@@ -70,7 +70,7 @@ const toUpdate = (d: MentorProfileDraft): MentorProfileUpdate => ({
 });
 
 export function MentorProfileForm({ mentor, email, publicPath, saving, onSave }: MentorProfileFormProps) {
-  const { values, set, errors, dirty, status, discard, handleSubmit } = useProfileForm(
+  const { values, set, errors, dirty, status, errorMessage, discard, handleSubmit } = useProfileForm(
     toDraft(mentor),
     validateMentorProfile,
     (draft) => onSave(toUpdate(draft)),
@@ -238,7 +238,7 @@ export function MentorProfileForm({ mentor, email, publicPath, saving, onSave }:
         </div>
       </fieldset>
 
-      <FormActions dirty={dirty} saving={saving} status={status} onDiscard={discard} />
+      <FormActions dirty={dirty} saving={saving} status={status} errorMessage={errorMessage} onDiscard={discard} />
     </form>
   );
 }

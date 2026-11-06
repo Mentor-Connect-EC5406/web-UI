@@ -43,6 +43,8 @@ function routeAfterSignIn() {
   if (!isReturning()) return;
   markReturning(false);
   const { user, newAccount, error } = useSession.getState();
+  // an existing account keeps its role, so a remembered sign up choice no longer applies
+  if (user) rememberSignupRole(null);
   if (user) void router.navigate(homePathFor(user.role), { replace: true });
   else if (newAccount) void router.navigate(readSignupRole() === 'MENTOR' ? `${paths.onboarding}?role=mentor` : paths.onboarding, { replace: true });
   else if (error) void router.navigate(paths.login, { replace: true });
@@ -92,9 +94,15 @@ function SessionBridge() {
         try {
           user = await accountApi.register(details);
         } catch (error) {
-          // a retry after the profile save failed finds the account already registered
           if (!isApiError(error, 409)) throw error;
-          user = await accountApi.me();
+          // a retry after the profile save failed finds this login already registered,
+          // a 404 here means the email belongs to another asgardeo login
+          user = await accountApi.me().catch((meError: unknown) => {
+            if (!isApiError(meError, 404)) throw meError;
+            throw new Error(
+              'This email is already linked to another MentorConnect login. Sign in with that account, or ask the MentorConnect team to remove the old one.',
+            );
+          });
         }
         await accountApi.saveOnboardingDetails(details);
         rememberSignupRole(null);

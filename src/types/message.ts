@@ -11,6 +11,8 @@ export interface Participant {
 export interface Contact extends Participant {
   // job title for mentors, shown under the name in search results
   headline: string;
+  // set for mentors from the directory, whose id is the mentor profile id and not the account id
+  mentorId?: string;
 }
 
 export interface Message {
@@ -29,11 +31,3 @@ export interface ConversationSummary {
   unreadCount: number;
 }
 
-// stored shape of a conversation, each user's inbox view is built from it
-export interface ConversationRecord {
-  id: string;
-  participants: Participant[];
-  messages: Message[];
-  // when each participant last opened the conversation
-  lastReadAt: Record<string, string>;
-}

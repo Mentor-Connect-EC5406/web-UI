@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { ApiError, api, setAccessTokenProvider } from './http';
+import { ApiError, api, describeFieldError, setAccessTokenProvider } from './http';
 
 function respondWith(status: number, body?: unknown) {
   const fetchMock = vi.fn().mockResolvedValue(
@@ -40,8 +40,12 @@ describe('api client', () => {
     respondWith(400, { message: 'Validation failed', fieldErrors: [{ field: 'firstName', message: 'must not be blank' }] });
     const error = (await api('/api/users/register').catch((e: unknown) => e)) as ApiError;
     expect(error).toBeInstanceOf(ApiError);
-    expect(error.message).toBe('must not be blank');
+    expect(error.message).toBe('First name must not be blank');
     expect(error.fieldErrors[0].field).toBe('firstName');
+  });
+
+  it('names the nested field in a validation error', () => {
+    expect(describeFieldError({ field: 'experience.0.startMonth', message: 'must be YYYY-MM' })).toBe('Start month must be YYYY-MM');
   });
 
   it('explains when the server cannot be reached', async () => {

@@ -41,7 +41,7 @@ export default function MessagesPage({ emptyHint, contactNoun }: MessagesPagePro
   const [filter, setFilter] = useState('');
   const [composing, setComposing] = useState(false);
   const [contactQuery, setContactQuery] = useState('');
-  const contacts = useContacts(userId, contactQuery, composing);
+  const contacts = useContacts(user?.role, contactQuery, composing);
 
   const selected = conversations.data?.find((c) => c.id === selectedId) ?? null;
   const unread = conversations.data?.reduce((sum, c) => sum + c.unreadCount, 0);
@@ -53,7 +53,7 @@ export default function MessagesPage({ emptyHint, contactNoun }: MessagesPagePro
   }, [selectedId, selectedUnread, userId, markReadNow]);
 
   function select(id: string | null) {
-    // keeps mockError and other flags while switching conversations
+    // keeps other url flags while switching conversations
     const next = new URLSearchParams(params);
     if (id) next.set('c', id);
     else next.delete('c');
@@ -69,7 +69,7 @@ export default function MessagesPage({ emptyHint, contactNoun }: MessagesPagePro
   // reuses an existing conversation so the same person never appears twice
   function startWith(contact: Contact) {
     start.mutate(
-      { userId, otherId: contact.id },
+      { userId, otherId: contact.id, mentorId: contact.mentorId },
       {
         onSuccess: (id) => {
           setComposing(false);
