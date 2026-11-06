@@ -6,7 +6,7 @@
   /* Brand */
   --color-brand: #f8d24d;
   --color-brand-hover: #e6c039;
-  --color-brand-soft: #fff7d6;
+  --color-brand-soft: #feea94;
 
   /* Text */
   --color-ink: #202124;
@@ -81,6 +81,59 @@
 
 .animate-cascade-3 {
   animation: slideDownFade 0.65s cubic-bezier(0.16, 1, 0.3, 1) 0.95s both;
+}
+
+@keyframes slideDownSmooth {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-down-1 {
+  animation: slideDownSmooth 0.75s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+}
+
+.animate-slide-down-2 {
+  animation: slideDownSmooth 0.75s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both;
+}
+
+.animate-slide-down-3 {
+  animation: slideDownSmooth 0.75s cubic-bezier(0.16, 1, 0.3, 1) 0.5s both;
+}
+
+@keyframes cardSlideDown {
+  0% {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes cardSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-card-down {
+  animation: cardSlideDown 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-card-up {
+  animation: cardSlideUp 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 /* 3D Flip Card Utilities */

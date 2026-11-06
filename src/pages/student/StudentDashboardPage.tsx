@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, Bookmark, Calendar, CalendarCheck, Search, Target } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import type { Session } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { Card, CardBody, CardHeader } from '@/components/ui/Card';
@@ -9,7 +9,7 @@ import { AsyncContent } from '@/components/common/AsyncContent';
 import { ListSkeleton } from '@/components/common/ListSkeleton';
 import { PageHeader } from '@/components/common/PageHeader';
 import { PersonRow } from '@/components/common/PersonRow';
-import { QuickLinks } from '@/components/common/QuickLinks';
+
 import { RatingStars } from '@/components/common/RatingStars';
 import { StatCard } from '@/components/common/StatCard';
 import { SessionCard } from '@/components/booking/SessionCard';
@@ -43,10 +43,10 @@ export default function StudentDashboardPage() {
       <AsyncContent query={sessions} loading={<Skeleton className="h-24" />}>
         {(list) => (
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            <StatCard label="Upcoming sessions" value={upcoming.length} icon={Calendar} />
-            <StatCard label="Completed sessions" value={list.filter((s) => s.status === 'COMPLETED').length} icon={CalendarCheck} />
-            <StatCard label="Active goals" value={goals.data?.length ?? '–'} icon={Target} />
-            <StatCard label="Saved mentors" value={saved.data?.length ?? '–'} icon={Bookmark} />
+            <StatCard label="Upcoming sessions" value={upcoming.length} className="animate-card-down [animation-delay:0.04s]" />
+            <StatCard label="Completed sessions" value={list.filter((s) => s.status === 'COMPLETED').length} className="animate-card-up [animation-delay:0.10s]" />
+            <StatCard label="Active goals" value={goals.data?.length ?? '–'} className="animate-card-down [animation-delay:0.16s]" />
+            <StatCard label="Saved mentors" value={saved.data?.length ?? '–'} className="animate-card-up [animation-delay:0.22s]" />
           </div>
         )}
       </AsyncContent>
@@ -101,19 +101,12 @@ export default function StudentDashboardPage() {
         </div>
 
         <div className="space-y-6">
-          <QuickLinks
-            links={[
-              { label: 'Find a mentor', to: paths.student.mentors, icon: Search },
-              { label: 'My sessions', to: paths.student.sessions, icon: Calendar },
-              { label: 'Career goals', to: paths.student.goals, icon: Target },
-            ]}
-          />
-          <Card>
-            <CardHeader
-              title="Recommended mentors"
-              action={<Button asChild variant="ghost" size="sm"><Link to={paths.student.mentors}>See all</Link></Button>}
-            />
-            <CardBody>
+          <section aria-labelledby="recommended-mentors">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 id="recommended-mentors" className="text-lg font-semibold text-ink">Recommended mentors</h2>
+              <Button asChild variant="ghost" size="sm"><Link to={paths.student.mentors}>See all</Link></Button>
+            </div>
+            <Card className="p-4">
               <AsyncContent query={mentors} loading={<ListSkeleton rows={3} rowClassName="h-14" />}>
                 {(list) => (
                   <div className="space-y-2">
@@ -125,8 +118,8 @@ export default function StudentDashboardPage() {
                   </div>
                 )}
               </AsyncContent>
-            </CardBody>
-          </Card>
+            </Card>
+          </section>
         </div>
       </div>
     </div>
