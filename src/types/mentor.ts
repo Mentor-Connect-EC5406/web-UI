@@ -1,7 +1,11 @@
 import type { ProfileExtras } from './profile';
 
+export type VerificationStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+
 export interface Mentor extends ProfileExtras {
   id: string;
+  // the account behind the mentor profile, needed to message them; search results leave it out
+  userId?: string;
   name: string;
   title: string;
   organization: string;
@@ -15,6 +19,17 @@ export interface Mentor extends ProfileExtras {
   rating: number;
   reviewCount: number;
   isVerified: boolean;
+  // only on full profiles, search results are always approved
+  verificationStatus?: VerificationStatus;
+}
+
+// a document the mentor sent for admin review
+export interface Verification {
+  id: string;
+  status: VerificationStatus;
+  // the admin's reason when rejected
+  reviewNote: string | null;
+  submittedAt: string;
 }
 
 export interface Review {

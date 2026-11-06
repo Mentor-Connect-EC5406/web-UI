@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, Bookmark, Calendar, CalendarCheck, Target } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import type { Session } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { Card, CardBody, CardHeader } from '@/components/ui/Card';
@@ -43,10 +43,10 @@ export default function StudentDashboardPage() {
       <AsyncContent query={sessions} loading={<Skeleton className="h-24" />}>
         {(list) => (
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            <StatCard label="Upcoming sessions" value={upcoming.length} icon={Calendar} />
-            <StatCard label="Completed sessions" value={list.filter((s) => s.status === 'COMPLETED').length} icon={CalendarCheck} />
-            <StatCard label="Active goals" value={goals.data?.length ?? '–'} icon={Target} />
-            <StatCard label="Saved mentors" value={saved.data?.length ?? '–'} icon={Bookmark} />
+            <StatCard label="Upcoming sessions" value={upcoming.length} className="animate-card-down [animation-delay:0.04s]" />
+            <StatCard label="Completed sessions" value={list.filter((s) => s.status === 'COMPLETED').length} className="animate-card-up [animation-delay:0.10s]" />
+            <StatCard label="Active goals" value={goals.data?.length ?? '–'} className="animate-card-down [animation-delay:0.16s]" />
+            <StatCard label="Saved mentors" value={saved.data?.length ?? '–'} className="animate-card-up [animation-delay:0.22s]" />
           </div>
         )}
       </AsyncContent>

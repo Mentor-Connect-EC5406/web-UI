@@ -1,5 +1,7 @@
 import {
+  DOCUMENT_TYPES,
   MAX_BIO_LENGTH,
+  MAX_DOCUMENT_BYTES,
   MAX_ENTRY_DESCRIPTION_LENGTH,
   MAX_EXPERIENCE_YEARS,
   MAX_HEADLINE_LENGTH,
@@ -17,6 +19,17 @@ import type {
   Project,
   StudentProfileUpdate,
 } from '@/types';
+
+export const emptyExtras = (): ProfileExtras => ({
+  headline: '',
+  location: '',
+  links: { linkedin: '', github: '', website: '' },
+  experience: [],
+  education: [],
+  certificates: [],
+  projects: [],
+  languages: [],
+});
 
 export type FieldErrors<K extends string> = Partial<Record<K, string>>;
 
@@ -129,6 +142,12 @@ export function validateLinks(links: ProfileLinks) {
 export function photoError(file: { type: string; size: number }) {
   if (!PHOTO_TYPES.includes(file.type)) return 'Choose a JPG, PNG or WebP image';
   if (file.size > MAX_PHOTO_BYTES) return `Choose an image under ${MAX_PHOTO_BYTES / 1024 / 1024} MB`;
+  return null;
+}
+
+export function documentError(file: { type: string; size: number }) {
+  if (!DOCUMENT_TYPES.includes(file.type)) return 'Choose a PDF, JPG or PNG file';
+  if (file.size > MAX_DOCUMENT_BYTES) return `Choose a file under ${MAX_DOCUMENT_BYTES / 1024 / 1024} MB`;
   return null;
 }
 

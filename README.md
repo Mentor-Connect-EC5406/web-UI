@@ -5,9 +5,9 @@ book career sessions with industry mentors.
 **Connect. Learn. Grow.**
 
 This repository holds the **UI layer**: pages, components, layouts and
-styles. Data comes through hooks in `src/data/`, answered by a mock server
-today. The API integration team swaps in real calls there (see
-[docs/API_HANDOFF.md](docs/API_HANDOFF.md)).
+styles. Data comes through hooks in `src/data/`, which call the
+MentorConnect API (see [docs/API_HANDOFF.md](docs/API_HANDOFF.md)). Sign in
+is handled by Asgardeo.
 
 ## Quick start
 
@@ -16,12 +16,10 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:5173 (Vite picks the next free port if 5173 is taken).
-Use **Sign in** and pick a demo role (student, mentor or admin) to see each area.
-
-- Every mock request takes ~0.6 s, so you can see loading states.
-- Add `?mockError` to any URL to preview error states.
-- Changes you make (bookings, cancellations…) last until you reload the page.
+Copy `.env.example` to `.env.local` and fill in the API and Asgardeo values.
+Open http://localhost:5173 (the port is fixed because Asgardeo redirects back
+to it) and log in with an Asgardeo account. A first login goes to onboarding,
+where you choose student or mentor.
 
 ## Scripts
 
@@ -59,12 +57,11 @@ src/
     ui/                 Design-system primitives (Button, Card, Badge, Dialog…)
     common/             Shared building blocks (AsyncContent, PageHeader, EmptyState…)
     mentor/  booking/   Domain components
-  data/                 Query hooks + API objects — the API team's swap point
-  mocks/                Seed data for the mock server
+  data/                 Query hooks + API objects that call the backend
   config/               Business constants and reference lists
   types/                Domain types, one file per domain
   lib/  hooks/          Pure helpers and reusable hooks
-  auth/                 Demo session (replaced by real auth later)
+  auth/                 Session store and the Asgardeo bridge
   styles/globals.css    Tailwind + design tokens
   test/setup.ts         Test setup
 public/brand/           Official logo files

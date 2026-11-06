@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import type { Role } from '@/types';
 import { useSession } from '@/auth/session';
 import { RequireRole } from './RequireRole';
 
@@ -18,8 +19,17 @@ function renderAt(path: string) {
   );
 }
 
+const signInAs = (role: Role) =>
+  useSession.setState({ user: { id: 'u1', name: 'Kasun Fernando', email: 'kasun@example.com', avatarUrl: null, role } });
+
 describe('RequireRole', () => {
-  beforeEach(() => useSession.getState().signOut());
+  beforeEach(() => useSession.setState({ user: null, newAccount: null, status: 'ready' }));
+
+  it('waits while the account is being checked', () => {
+    useSession.setState({ status: 'loading' });
+    renderAt('/student');
+    expect(screen.getByText(/checking your account/i)).toBeTruthy();
+  });
 
   it('sends signed-out visitors to the login page', () => {
     renderAt('/student');
@@ -27,13 +37,13 @@ describe('RequireRole', () => {
   });
 
   it('blocks users with a different role', () => {
-    useSession.getState().signInAs('MENTOR');
+    signInAs('MENTOR');
     renderAt('/student');
     expect(screen.getByText('Forbidden page')).toBeTruthy();
   });
 
   it('lets the right role in', () => {
-    useSession.getState().signInAs('STUDENT');
+    signInAs('STUDENT');
     renderAt('/student');
     expect(screen.getByText('Student home')).toBeTruthy();
   });

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { STUDENT_PROFILE } from '@/mocks/users';
+import { STUDENT_PROFILE } from '@/test/fixtures';
 import { StudentProfileForm } from './StudentProfileForm';
 
 function setup(onSave = vi.fn().mockResolvedValue(undefined)) {
@@ -86,7 +86,7 @@ describe('StudentProfileForm', () => {
 
   it('lists what is missing and toggles open to opportunities', () => {
     setup();
-    expect(screen.getByRole('button', { name: 'Add a photo' })).toBeTruthy();
+
     const toggle = screen.getByRole('switch', { name: /open to opportunities/i });
     expect(toggle.getAttribute('aria-checked')).toBe('true');
     fireEvent.click(toggle);

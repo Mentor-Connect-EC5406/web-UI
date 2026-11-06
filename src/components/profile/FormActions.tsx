@@ -8,11 +8,13 @@ interface FormActionsProps {
   dirty: boolean;
   saving: boolean;
   status: SaveStatus;
+  // the server's reason when the save failed
+  errorMessage?: string | null;
   onDiscard: () => void;
 }
 
 // save and discard bar, it sticks to the bottom while there is something to save because the profile pages are long
-export function FormActions({ dirty, saving, status, onDiscard }: FormActionsProps) {
+export function FormActions({ dirty, saving, status, errorMessage, onDiscard }: FormActionsProps) {
   return (
     <div
       className={cn(
@@ -28,7 +30,7 @@ export function FormActions({ dirty, saving, status, onDiscard }: FormActionsPro
         )}
         {status === 'error' && (
           <span className="flex items-center gap-1.5 text-accent">
-            <AlertCircle className="size-4" aria-hidden /> Your changes could not be saved. Please try again.
+            <AlertCircle className="size-4 shrink-0" aria-hidden /> Your changes could not be saved. {errorMessage || 'Please try again.'}
           </span>
         )}
         {!status && dirty && <span className="text-ink-secondary">You have unsaved changes</span>}

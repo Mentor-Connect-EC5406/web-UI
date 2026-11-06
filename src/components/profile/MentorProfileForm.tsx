@@ -7,7 +7,7 @@ import { Input, Textarea } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { CopyLinkButton } from '@/components/common/CopyLinkButton';
 import { FormField } from '@/components/common/FormField';
-import { RatingStars } from '@/components/common/RatingStars';
+
 import { TagInput } from '@/components/common/TagInput';
 import { VerifiedBadge } from '@/components/common/VerifiedBadge';
 import { INDUSTRIES } from '@/config/options';
@@ -70,14 +70,14 @@ const toUpdate = (d: MentorProfileDraft): MentorProfileUpdate => ({
 });
 
 export function MentorProfileForm({ mentor, email, publicPath, saving, onSave }: MentorProfileFormProps) {
-  const { values, set, errors, dirty, status, discard, handleSubmit } = useProfileForm(
+  const { values, set, errors, dirty, status, errorMessage, discard, handleSubmit } = useProfileForm(
     toDraft(mentor),
     validateMentorProfile,
     (draft) => onSave(toUpdate(draft)),
   );
 
   const progress = profileProgress([
-    { label: 'a photo', value: values.avatarUrl, section: 'photo' },
+
     { label: 'a headline', value: values.headline, section: 'intro' },
     { label: 'your location', value: values.location, section: 'intro' },
     { label: 'a link', value: Object.values(values.links).filter((l) => l.trim()), section: 'intro' },
@@ -85,7 +85,7 @@ export function MentorProfileForm({ mentor, email, publicPath, saving, onSave }:
     { label: 'education', value: values.education, section: 'education' },
     { label: 'a certificate', value: values.certificates, section: 'certificates' },
     { label: 'a project', value: values.projects, section: 'projects' },
-    { label: 'languages', value: values.languages, section: 'languages' },
+
   ]);
 
   const priceHint = /^\d+$/.test(values.hourlyRate)
@@ -109,7 +109,7 @@ export function MentorProfileForm({ mentor, email, publicPath, saving, onSave }:
             badges={
               <>
                 {mentor.isVerified ? <VerifiedBadge /> : <Badge><Clock className="size-3" aria-hidden /> Pending review</Badge>}
-                <RatingStars rating={mentor.rating} reviewCount={mentor.reviewCount} />
+
               </>
             }
             actions={
@@ -238,7 +238,7 @@ export function MentorProfileForm({ mentor, email, publicPath, saving, onSave }:
         </div>
       </fieldset>
 
-      <FormActions dirty={dirty} saving={saving} status={status} onDiscard={discard} />
+      <FormActions dirty={dirty} saving={saving} status={status} errorMessage={errorMessage} onDiscard={discard} />
     </form>
   );
 }

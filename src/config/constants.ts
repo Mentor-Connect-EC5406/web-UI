@@ -23,9 +23,13 @@ export const MAX_DESIRED_ROLES = 5;
 export const PROFILE_YEARS_BACK = 60;
 export const PROFILE_YEARS_AHEAD = 6;
 
-// profile photos are kept small because they are stored inline until uploads exist
+// kept under the api limit of 5 MB so photos stay quick to load
 export const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
 export const PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
+// mentor verification documents, checked again by the api
+export const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024;
+export const DOCUMENT_TYPES = ['application/pdf', 'image/jpeg', 'image/png'];
 
 // reviews must say something useful but stay short enough to read on a profile
 export const REVIEW_MIN_LENGTH = 20;

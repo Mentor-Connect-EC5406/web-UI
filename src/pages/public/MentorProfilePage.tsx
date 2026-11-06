@@ -1,6 +1,6 @@
 import { Link, useParams } from 'react-router-dom';
 import { Briefcase, MapPin, UserX } from 'lucide-react';
-import type { Mentor } from '@/types';
+import type { Mentor, Role } from '@/types';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -18,6 +18,7 @@ import { useSession } from '@/auth/session';
 import { useMentor, useMentorReviews, useMentorSlots } from '@/data/mentors';
 import { useBookSession } from '@/data/sessions';
 import { formatPrice } from '@/lib/format';
+import { useAuthRedirect } from '@/auth/useAuthRedirect';
 
 interface MentorProfilePageProps {
   // where the back to mentors link leads
@@ -40,7 +41,7 @@ function ProfileHeader({ mentor }: { mentor: Mentor }) {
         </p>
         <div className="mt-2"><LinkList links={mentor.links} /></div>
         <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-          <RatingStars rating={mentor.rating} reviewCount={mentor.reviewCount} size="md" />
+
           <span className="text-ink-secondary">{mentor.experienceYears} years experience</span>
           <span className="font-semibold text-ink">{formatPrice(mentor.hourlyRate)} / hr</span>
         </div>
@@ -78,6 +79,19 @@ function Reviews({ mentorId }: { mentorId: string }) {
   );
 }
 
+// the api lets only signed in students book
+function bookingBlocked(role: Role | undefined, onLogIn: () => void) {
+  if (role === 'STUDENT') return undefined;
+  if (!role) {
+    return (
+      <Button className="mt-4 w-full" onClick={onLogIn}>
+        Log in as a student to book
+      </Button>
+    );
+  }
+  return <p className="mt-4 text-sm text-ink-secondary">Only students can book sessions.</p>;
+}
+
 // mentor profile with about tab, reviews tab and booking panel
 export default function MentorProfilePage({ backPath }: MentorProfilePageProps) {
   const { id = '' } = useParams();
@@ -85,6 +99,7 @@ export default function MentorProfilePage({ backPath }: MentorProfilePageProps) 
   const mentorQuery = useMentor(id);
   const slots = useMentorSlots(id);
   const book = useBookSession();
+  const { logIn } = useAuthRedirect();
 
   return (
     <AsyncContent query={mentorQuery}>
@@ -124,6 +139,7 @@ export default function MentorProfilePage({ backPath }: MentorProfilePageProps) 
                     mentor={mentor}
                     slots={slotList}
                     onBook={(slot) => book.mutateAsync({ mentor, slot, studentName: user?.name ?? 'Guest' })}
+                    blocked={bookingBlocked(user?.role, logIn)}
                   />
                 )}
               </AsyncContent>

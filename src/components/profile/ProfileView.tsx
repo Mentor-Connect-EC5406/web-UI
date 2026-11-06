@@ -1,8 +1,7 @@
 import type { ReactNode } from 'react';
-import { BriefcaseBusiness, EyeOff, Mail, MapPin, Phone } from 'lucide-react';
+import { EyeOff, Mail, MapPin, Phone } from 'lucide-react';
 import type { ProfileExtras, StudentProfile } from '@/types';
 import { Avatar } from '@/components/ui/Avatar';
-import { Badge } from '@/components/ui/Badge';
 import { Card, CardBody, CardHeader } from '@/components/ui/Card';
 import { EntryList, LanguageList, LinkList, SkillList } from './ProfileLists';
 import {
@@ -25,11 +24,7 @@ function ViewCard({ title, children }: { title: string; children: ReactNode }) {
 }
 
 export function OpenToOpportunitiesBadge() {
-  return (
-    <Badge tone="success">
-      <BriefcaseBusiness className="size-3" aria-hidden /> Open to opportunities
-    </Badge>
-  );
+  return null;
 }
 
 // experience, education, certificates, projects and languages, empty sections are left out

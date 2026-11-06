@@ -6,7 +6,6 @@ import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { RatingStars } from '@/components/common/RatingStars';
 import { VerifiedBadge } from '@/components/common/VerifiedBadge';
 import { cn } from '@/lib/cn';
 import { formatPrice } from '@/lib/format';
@@ -52,9 +51,7 @@ export function MentorCard({ mentor, profilePath, saved = false, savePending, on
           <p className="mt-0.5 text-sm text-ink-secondary">
             {mentor.title} · {mentor.organization}
           </p>
-          <div className="mt-1.5">
-            <RatingStars rating={mentor.rating} reviewCount={mentor.reviewCount} />
-          </div>
+
         </div>
         {onToggleSave && (
           <Button

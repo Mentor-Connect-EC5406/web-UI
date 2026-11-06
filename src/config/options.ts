@@ -41,3 +41,10 @@ export const WORK_TYPES: readonly WorkType[] = ['Internship', 'Full time', 'Part
 export const WORK_ARRANGEMENTS: readonly WorkArrangement[] = ['On site', 'Hybrid', 'Remote'];
 
 export const ROLE_LABELS: Record<Role, string> = { STUDENT: 'Student', MENTOR: 'Mentor', ADMIN: 'Admin' };
+
+export const REPORT_CATEGORY_LABELS: Record<string, string> = {
+  NO_SHOW: 'No show',
+  INAPPROPRIATE_BEHAVIOR: 'Inappropriate behaviour',
+  PAYMENT_ISSUE: 'Payment issue',
+  OTHER: 'Other',
+};

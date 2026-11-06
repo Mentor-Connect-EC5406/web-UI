@@ -1,55 +1,61 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { EMPTY_FILTERS } from '@/lib/mentorFilters';
-import { mentorsApi } from './mentors';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { MentorFilterValues } from '@/types';
+import { mentorsApi, type MentorSummaryResponse } from './mentors';
 
-/** Runs a mock API call, skipping its simulated network delay */
-async function run<T>(call: Promise<T>): Promise<T> {
-  await vi.runAllTimersAsync();
-  return call;
+const summary: MentorSummaryResponse = {
+  id: 'm1', firstName: 'Nimal', lastName: 'Silva', profileImageKey: null, title: 'Engineer', organization: 'WSO2',
+  industry: 'Software Engineering', bio: null, headline: 'Helping students', location: 'Colombo', skills: ['React'],
+  experienceYears: 8, hourlyRateCents: 250000, currency: 'LKR', ratingAvg: 4.67, ratingCount: 3,
+};
+
+function respondWith(status: number, body?: unknown) {
+  const fetchMock = vi.fn().mockResolvedValue(new Response(body === undefined ? null : JSON.stringify(body), { status }));
+  vi.stubGlobal('fetch', fetchMock);
+  return fetchMock;
 }
 
-describe('mentorsApi.search (mock)', () => {
-  beforeEach(() => vi.useFakeTimers());
-  afterEach(() => vi.useRealTimers());
+const filters: MentorFilterValues = { query: ' react ', industries: ['Software Engineering'], minRating: '4', maxRate: '3000', sort: 'price' };
 
-  it('returns every mentor, top rated first, with no filters', async () => {
-    const list = await run(mentorsApi.search(EMPTY_FILTERS));
-    expect(list.length).toBe(6);
-    expect(list[0].rating).toBeGreaterThanOrEqual(list[1].rating);
+describe('mentorsApi', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('sends the filters with the price in cents and maps the page', async () => {
+    const fetchMock = respondWith(200, { content: [summary], page: 0, size: 100, totalElements: 1, totalPages: 1 });
+    const [mentor] = await mentorsApi.search(filters);
+    const url = new URL(fetchMock.mock.calls[0][0]);
+    expect(url.pathname).toBe('/api/mentors');
+    expect(url.searchParams.get('query')).toBe('react');
+    expect(url.searchParams.getAll('industries')).toEqual(['Software Engineering']);
+    expect(url.searchParams.get('maxRateCents')).toBe('300000');
+    expect(url.searchParams.get('sort')).toBe('price');
+    expect(mentor).toMatchObject({ id: 'm1', name: 'Nimal Silva', hourlyRate: 2500, rating: 4.7, reviewCount: 3, bio: '', isVerified: true });
+    expect(mentor.experience).toEqual([]);
   });
 
-  it('matches the search text against name, company and skills', async () => {
-    const list = await run(mentorsApi.search({ ...EMPTY_FILTERS, query: 'figma' }));
-    expect(list.map((m) => m.name)).toEqual(['Chamari Wickramasinghe']);
+  it('returns null for a mentor that does not exist', async () => {
+    respondWith(404, { message: 'Mentor not found' });
+    expect(await mentorsApi.get('missing')).toBeNull();
   });
 
-  it('combines industry and price filters', async () => {
-    const fields = ['Software Engineering', 'Product Management'];
-    const list = await run(mentorsApi.search({ ...EMPTY_FILTERS, industries: fields, maxRate: '2800' }));
-    expect(list.map((m) => m.name)).toEqual(['Nimal Silva']);
+  it('keeps other errors so the screen can offer a retry', async () => {
+    respondWith(500, {});
+    await expect(mentorsApi.get('m1')).rejects.toMatchObject({ status: 500 });
   });
 
-  it('sorts by lowest price', async () => {
-    const list = await run(mentorsApi.search({ ...EMPTY_FILTERS, sort: 'price' }));
-    const prices = list.map((m) => m.hourlyRate);
-    expect(prices).toEqual([...prices].sort((a, b) => a - b));
+  it('maps a full profile with its account id and verification', async () => {
+    respondWith(200, {
+      ...summary, userId: 'u1', verificationStatus: 'PENDING', links: { linkedin: '', github: '', website: '' },
+      experience: [], education: [], certificates: [], projects: [], languages: [{ name: 'English', level: 'Fluent' }],
+    });
+    const mentor = await mentorsApi.get('m1');
+    expect(mentor).toMatchObject({ userId: 'u1', isVerified: false, verificationStatus: 'PENDING', languages: [{ name: 'English', level: 'Fluent' }] });
   });
 
-  it('returns null for an unknown mentor id', async () => {
-    expect(await run(mentorsApi.get('nope'))).toBeNull();
-  });
-
-  it('saves profile edits so the public profile shows them', async () => {
-    const mine = await run(mentorsApi.mine());
-    expect(mine?.id).toBe('mentor-1');
-    await run(mentorsApi.updateMine({
-      ...mine!,
-      firstName: 'Nimal', lastName: 'Silva Perera', title: 'Staff Engineer', hourlyRate: 3000,
-      certificates: [{ id: 'c1', name: 'CKA', issuer: 'CNCF', issuedMonth: '2025-05', credentialUrl: '' }],
-    }));
-    const updated = await run(mentorsApi.get('mentor-1'));
-    expect(updated).toMatchObject({ name: 'Nimal Silva Perera', title: 'Staff Engineer', hourlyRate: 3000, rating: 4.8 });
-    expect(updated?.certificates.map((c) => c.name)).toEqual(['CKA']);
-    expect(updated?.experience.length).toBeGreaterThan(0);
+  it('adds a slot with the api field names', async () => {
+    const fetchMock = respondWith(201, { id: 's1', startTime: 'a', endTime: 'b', status: 'AVAILABLE' });
+    await mentorsApi.addSlot({ startsAt: '2026-12-01T04:30:00.000Z', endsAt: '2026-12-01T05:30:00.000Z' });
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(body).toMatchObject({ startTime: '2026-12-01T04:30:00.000Z', endTime: '2026-12-01T05:30:00.000Z' });
+    expect(body.timezone).toBeTruthy();
   });
 });
