@@ -1,10 +1,19 @@
-import type { AccountStatus, ReportStatus, SessionStatus, SlotStatus } from '@/types';
+import type { AccountStatus, MentorshipStatus, ReportStatus, SessionStatus, SlotStatus } from '@/types';
 import type { BadgeTone } from '@/components/ui/Badge';
 
 export const sessionStatusMeta: Record<SessionStatus, { label: string; tone: BadgeTone }> = {
   PENDING: { label: 'Pending', tone: 'brand' },
   CONFIRMED: { label: 'Confirmed', tone: 'info' },
   COMPLETED: { label: 'Completed', tone: 'success' },
+  CANCELLED: { label: 'Cancelled', tone: 'accent' },
+};
+
+export const mentorshipStatusMeta: Record<MentorshipStatus, { label: string; tone: BadgeTone }> = {
+  REQUESTED: { label: 'Waiting for mentor', tone: 'brand' },
+  ACTIVE: { label: 'Active', tone: 'success' },
+  DECLINED: { label: 'Declined', tone: 'accent' },
+  WITHDRAWN: { label: 'Withdrawn', tone: 'neutral' },
+  COMPLETED: { label: 'Completed', tone: 'info' },
   CANCELLED: { label: 'Cancelled', tone: 'accent' },
 };
 

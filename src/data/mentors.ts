@@ -6,6 +6,7 @@ import { fileUrl } from '@/config/env';
 import { useSession } from '@/auth/session';
 import { fromCents, roundRating, toCents } from '@/lib/format';
 import { emptyExtras } from '@/lib/profile';
+import type { SlotRange } from '@/lib/slots';
 import { accountApi } from './account';
 import { api, isApiError, listAll, uploadFile } from './http';
 import { keys } from './keys';
@@ -132,7 +133,7 @@ export const mentorsApi = {
 
   removeSlot: (slotId: string) => api<void>(`/api/mentors/me/slots/${slotId}`, { method: 'DELETE' }),
 
-  addSlot: ({ startsAt, endsAt }: { startsAt: string; endsAt: string }) =>
+  addSlot: ({ startsAt, endsAt }: SlotRange) =>
     api<SlotResponse>('/api/mentors/me/slots', {
       method: 'POST',
       body: { startTime: startsAt, endTime: endsAt, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone },
@@ -191,11 +192,33 @@ export function useRemoveSlot() {
   });
 }
 
-export function useAddSlot() {
+export interface AddSlotsResult {
+  created: number;
+  // times the api refused, e.g. one a student booked meanwhile
+  failed: { range: SlotRange; reason: string }[];
+}
+
+// one request per slot, in order, so a refused slot does not stop the rest
+export async function addSlots(ranges: SlotRange[]): Promise<AddSlotsResult> {
+  const result: AddSlotsResult = { created: 0, failed: [] };
+  for (const range of ranges) {
+    try {
+      await mentorsApi.addSlot(range);
+      result.created++;
+    } catch (error) {
+      result.failed.push({ range, reason: error instanceof Error ? error.message : 'Not saved' });
+    }
+  }
+  if (result.created === 0 && result.failed.length > 0) throw new Error(result.failed[0].reason);
+  return result;
+}
+
+export function useAddSlots() {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: mentorsApi.addSlot,
-    onSuccess: () => client.invalidateQueries({ queryKey: ['slots'] }),
+    mutationFn: addSlots,
+    // refresh even after a partial failure so the saved slots appear
+    onSettled: () => client.invalidateQueries({ queryKey: ['slots'] }),
   });
 }
 

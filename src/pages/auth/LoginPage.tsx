@@ -9,7 +9,9 @@ import { paths } from '@/app/paths';
 // log in hands off to asgardeo
 export default function LoginPage() {
   const signIn = useSession((s) => s.signIn);
+  const signOut = useSession((s) => s.signOut);
   const error = useSession((s) => s.error);
+  const checking = useSession((s) => s.status === 'loading');
   const [leaving, setLeaving] = useState(false);
 
   function handleSignIn() {
@@ -26,7 +28,7 @@ export default function LoginPage() {
       </div>
 
       {error && (
-        <div className="mb-4 flex items-start gap-2 rounded-xl bg-accent-soft p-3 text-xs text-accent">
+        <div role="alert" className="mb-4 flex items-start gap-2 rounded-xl bg-accent-soft p-3 text-xs text-accent">
           <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
           <span>{error}</span>
         </div>
@@ -34,12 +36,16 @@ export default function LoginPage() {
 
       <Button
         size="lg"
-        loading={leaving}
+        loading={checking || (leaving && !error)}
         className="w-full font-semibold transition-all duration-300 ease-out hover:scale-[1.01]"
         onClick={handleSignIn}
       >
-        Log in
+        {error ? 'Try again' : 'Log in'}
       </Button>
+      {/* signing out of asgardeo is the only way to switch to another account after a failed sign in */}
+      {error && (
+        <Button size="lg" variant="secondary" className="mt-3 w-full" onClick={signOut}>Sign out and use another account</Button>
+      )}
       <p className="mt-3 text-center text-xs text-ink-muted">Secure sign-in with Asgardeo</p>
 
       <p className="mt-8 text-center text-sm text-ink-secondary">

@@ -25,7 +25,37 @@ export interface Session {
   price: number;
   // true once the student has reviewed a completed session
   reviewed?: boolean;
+  cancellationReason?: string | null;
+  // a pending request is released when the mentor has not answered by then
+  expiresAt?: string | null;
+  // set when the session belongs to a long term mentorship
+  mentorshipId?: string | null;
 }
+
+// what the student sends with a booking
+export interface BookingInput {
+  slotId: string;
+  topic: string;
+}
+
+export type SessionTaskType = 'HOMEWORK' | 'TARGET' | 'GOAL';
+
+// homework, a target or a goal agreed for one session, either side can add them
+export interface SessionTask {
+  id: string;
+  sessionId: string;
+  type: SessionTaskType;
+  title: string;
+  details: string;
+  // ISO date yyyy-mm-dd
+  dueDate: string | null;
+  done: boolean;
+  createdBy: 'STUDENT' | 'MENTOR';
+  createdByName: string;
+  updatedAt: string;
+}
+
+export type SessionTaskInput = Pick<SessionTask, 'type' | 'title' | 'details' | 'dueDate'>;
 
 // what a student writes about a completed session
 export interface SessionReviewInput {

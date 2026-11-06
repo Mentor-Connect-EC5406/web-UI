@@ -7,9 +7,11 @@ import { BrandLogo } from '@/components/common/BrandLogo';
 import { NotificationBell } from '@/components/messages/NotificationBell';
 import { useSession } from '@/auth/session';
 import { useConversations } from '@/data/messages';
+import { useMarkAllNotificationsRead, useMarkNotificationRead, useNotifications } from '@/data/notifications';
 import { NOTIFICATION_PREVIEW_COUNT } from '@/config/constants';
 import { paths } from '@/app/paths';
 import { cn } from '@/lib/cn';
+import { notificationHref } from '@/lib/notifications';
 import type { NavItem } from '@/app/routes/types';
 import { PageOutlet } from './PageOutlet';
 
@@ -18,15 +20,24 @@ const roleLabel = { STUDENT: 'Student', MENTOR: 'Mentor', ADMIN: 'Admin' } as co
 // admins have no inbox so they get no bell
 const inboxPaths = { STUDENT: paths.student, MENTOR: paths.mentorArea } as const;
 
-function HeaderNotifications({ userId, inbox }: { userId: string; inbox: (typeof inboxPaths)[keyof typeof inboxPaths] }) {
+function HeaderNotifications({ userId, role }: { userId: string; role: keyof typeof inboxPaths }) {
   const conversations = useConversations(userId);
+  const notifications = useNotifications();
+  const markRead = useMarkNotificationRead();
+  const markAllRead = useMarkAllNotificationsRead();
+  const inbox = inboxPaths[role];
   return (
     <NotificationBell
+      notifications={notifications.data}
       conversations={conversations.data?.slice(0, NOTIFICATION_PREVIEW_COUNT)}
-      unread={conversations.data?.reduce((sum, c) => sum + c.unreadCount, 0) ?? 0}
+      unreadMessages={conversations.data?.reduce((sum, c) => sum + c.unreadCount, 0) ?? 0}
       currentUserId={userId}
+      notificationHref={(n) => notificationHref(n.topic, role)}
       conversationHref={inbox.conversation}
-      allHref={inbox.messages}
+      allMessagesHref={inbox.messages}
+      onOpenNotification={(n) => markRead.mutate(n.id)}
+      onMarkAllRead={() => markAllRead.mutate()}
+      markingAll={markAllRead.isPending}
     />
   );
 }
@@ -83,7 +94,7 @@ export function AppLayout({ nav }: { nav: NavItem[] }) {
 
         {/* Right side user info & notifications */}
         <div className="flex items-center gap-3">
-          {user.role !== 'ADMIN' && <HeaderNotifications userId={user.id} inbox={inboxPaths[user.role]} />}
+          {user.role !== 'ADMIN' && <HeaderNotifications userId={user.id} role={user.role} />}
           <div className="hidden text-right sm:block">
             <p className="text-sm font-medium text-ink">{user.name}</p>
             <p className="text-xs text-ink-muted">{roleLabel[user.role]}</p>

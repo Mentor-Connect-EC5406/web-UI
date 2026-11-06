@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Session } from '@/types';
 import { CANCELLATION_WINDOW_HOURS, REVIEW_MIN_LENGTH } from '@/config/constants';
-import { isInsideChangeWindow, mentoredStudents, validateReview } from './sessions';
+import { canCancel, isInsideChangeWindow, joinState, mentoredStudents, validateReview, validateTask } from './sessions';
 
 const now = new Date('2026-11-01T09:00:00Z');
 const hoursFromNow = (h: number) => new Date(now.getTime() + h * 3_600_000).toISOString();
@@ -57,5 +57,33 @@ describe('mentoredStudents', () => {
       session({ studentName: 'Sahan', status: 'CANCELLED' }),
     ]);
     expect(result).toEqual([{ key: 'Tharushi', studentId: null, name: 'Tharushi', sessionCount: 1, lastSessionAt: '2026-10-01T10:00:00Z' }]);
+  });
+});
+
+describe('session actions', () => {
+  const session = (status: Session['status'], startHours: number, meetingUrl: string | null = 'https://meet.jit.si/x'): Session => ({
+    id: 'b1', mentorName: 'Nimal', studentName: 'Kasun', topic: 'CV review', price: 2500, meetingUrl, status,
+    startsAt: hoursFromNow(startHours), endsAt: hoursFromNow(startHours + 1),
+  });
+
+  it('opens the meeting link shortly before the start and closes it after the end', () => {
+    expect(joinState(session('CONFIRMED', 2), now)).toBe('early');
+    expect(joinState(session('CONFIRMED', 0.2), now)).toBe('open');
+    expect(joinState(session('CONFIRMED', -0.5), now)).toBe('open');
+    expect(joinState(session('CONFIRMED', -2), now)).toBe('ended');
+    expect(joinState(session('PENDING', 0.2), now)).toBe('unavailable');
+    expect(joinState(session('CONFIRMED', 0.2, null), now)).toBe('unavailable');
+  });
+
+  it('lets a pending request be withdrawn freely but guards a confirmed session', () => {
+    expect(canCancel(session('PENDING', 1), now)).toBe(true);
+    expect(canCancel(session('CONFIRMED', 1), now)).toBe(false);
+    expect(canCancel(session('CONFIRMED', CANCELLATION_WINDOW_HOURS + 1), now)).toBe(true);
+    expect(canCancel(session('COMPLETED', 48), now)).toBe(false);
+  });
+
+  it('validates task titles', () => {
+    expect(validateTask({ title: ' ', details: '' })).toEqual({ title: 'Give it a short title.' });
+    expect(validateTask({ title: 'Read chapter 3', details: '' })).toEqual({});
   });
 });

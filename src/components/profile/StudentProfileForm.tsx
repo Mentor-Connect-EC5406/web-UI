@@ -3,6 +3,7 @@ import { Eye } from 'lucide-react';
 import type { StudentProfile, StudentProfileUpdate } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { Input, Textarea } from '@/components/ui/Input';
+import { Combobox } from '@/components/ui/Combobox';
 import { Select } from '@/components/ui/Select';
 import { ChipToggleGroup } from '@/components/common/ChipToggleGroup';
 import { CopyLinkButton } from '@/components/common/CopyLinkButton';
@@ -120,7 +121,7 @@ export function StudentProfileForm({ profile, previewPath, saving, onSave }: Stu
           <ProfileSection id="academic" title="Academic details">
             <div className="space-y-4">
               <FormField htmlFor="university" label="University">
-                <Select id="university" value={values.university} onValueChange={(university) => set({ university })} placeholder="Select your university" options={UNIVERSITIES} />
+                <Combobox id="university" value={values.university} onValueChange={(university) => set({ university })} placeholder="Start typing your university" suggestions={UNIVERSITIES} maxLength={200} />
               </FormField>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <FormField htmlFor="degree" label="Degree">
