@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
-import type { Session } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { Card, CardBody, CardHeader } from '@/components/ui/Card';
 import { Progress } from '@/components/ui/Progress';
@@ -9,7 +8,6 @@ import { AsyncContent } from '@/components/common/AsyncContent';
 import { ListSkeleton } from '@/components/common/ListSkeleton';
 import { PageHeader } from '@/components/common/PageHeader';
 import { PersonRow } from '@/components/common/PersonRow';
-
 import { RatingStars } from '@/components/common/RatingStars';
 import { StatCard } from '@/components/common/StatCard';
 import { SessionCard } from '@/components/booking/SessionCard';

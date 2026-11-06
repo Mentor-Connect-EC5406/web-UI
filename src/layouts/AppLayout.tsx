@@ -94,7 +94,7 @@ export function AppLayout({ nav }: { nav: NavItem[] }) {
 
         {/* Right side user info & notifications */}
         <div className="flex items-center gap-3">
-          {user.role !== 'ADMIN' && <HeaderNotifications userId={user.id} inbox={inboxPaths[user.role]} />}
+          {user.role !== 'ADMIN' && <HeaderNotifications userId={user.id} role={user.role} />}
           <div className="hidden text-right sm:block">
             <p className="text-sm font-medium text-ink">{user.name}</p>
             <p className="text-xs text-ink-muted">{roleLabel[user.role]}</p>

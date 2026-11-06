@@ -25,7 +25,11 @@ export function SessionCard({ session, counterpart, detailsHref, actions }: Sess
           <Avatar name={name} className="size-11 shrink-0" />
           <div className="min-w-0 flex-1 space-y-1.5">
             <div className="flex flex-wrap items-center gap-2">
-              <p className="text-base font-semibold text-ink">{name}</p>
+              {detailsHref ? (
+                <Link to={detailsHref} className="text-base font-semibold text-ink hover:underline">{name}</Link>
+              ) : (
+                <p className="text-base font-semibold text-ink">{name}</p>
+              )}
               <SessionStatusBadge status={session.status} />
             </div>
             <p className="text-sm font-medium text-ink-secondary">{session.topic}</p>
@@ -33,6 +37,11 @@ export function SessionCard({ session, counterpart, detailsHref, actions }: Sess
               <Calendar className="size-3.5 text-ink-muted" aria-hidden />
               {formatSessionTime(session.startsAt, session.endsAt)}
             </p>
+            {session.status === 'PENDING' && session.expiresAt && (
+              <p className="text-xs text-ink-muted">
+                {counterpart === 'mentor' ? 'Waiting for the mentor to accept' : 'Answer this request'} by {formatDateTime(session.expiresAt)}
+              </p>
+            )}
           </div>
         </div>
         <p className="shrink-0 text-base font-semibold text-ink">{formatPrice(session.price)}</p>
