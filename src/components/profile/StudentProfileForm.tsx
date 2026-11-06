@@ -31,7 +31,7 @@ interface StudentProfileFormProps {
 
 export function StudentProfileForm({ profile, previewPath, saving, onSave }: StudentProfileFormProps) {
   const { email, ...initial } = profile;
-  const { values, saved, set, errors, dirty, status, discard, handleSubmit } = useProfileForm(initial, validateStudentProfile, onSave);
+  const { values, saved, set, errors, dirty, status, errorMessage, discard, handleSubmit } = useProfileForm(initial, validateStudentProfile, onSave);
 
   const progress = profileProgress([
 
@@ -160,7 +160,7 @@ export function StudentProfileForm({ profile, previewPath, saving, onSave }: Stu
         </div>
       </fieldset>
 
-      <FormActions dirty={dirty} saving={saving} status={status} onDiscard={discard} />
+      <FormActions dirty={dirty} saving={saving} status={status} errorMessage={errorMessage} onDiscard={discard} />
     </form>
   );
 }

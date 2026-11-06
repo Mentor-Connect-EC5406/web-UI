@@ -3,6 +3,7 @@ import { Mail, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { BrandLogo } from '@/components/common/BrandLogo';
 import { useSession } from '@/auth/session';
+import { useAuthRedirect } from '@/auth/useAuthRedirect';
 import { homePathFor, paths } from '@/app/paths';
 import { cn } from '@/lib/cn';
 import { PageOutlet } from './PageOutlet';
@@ -11,8 +12,17 @@ import { PageOutlet } from './PageOutlet';
 const PUBLIC_NAV = [
   { label: 'Find mentors', to: paths.mentors },
   { label: 'How it works', to: paths.howItWorks },
-  { label: 'Become a mentor', to: paths.signup },
 ];
+
+// opens the asgardeo sign up straight away, onboarding then starts as a mentor
+function BecomeMentorLink({ className }: { className: string }) {
+  const { signUp } = useAuthRedirect();
+  return (
+    <button type="button" onClick={() => signUp('MENTOR')} className={cn('cursor-pointer', className)}>
+      Become a mentor
+    </button>
+  );
+}
 
 function YoutubeIcon({ className = 'size-4' }: { className?: string }) {
   return (
@@ -31,6 +41,7 @@ const LANDING_NAV = [
 
 function Navbar() {
   const user = useSession((s) => s.user);
+  const { logIn, signUp } = useAuthRedirect();
   const location = useLocation();
   const isLanding = location.pathname === paths.home;
 
@@ -49,7 +60,7 @@ function Navbar() {
     <header
       className={cn(
         'sticky top-0 z-40 transition-colors',
-        isLanding ? 'bg-[#f8d24d] border-b border-black/15' : 'bg-surface border-b border-line'
+        isLanding ? 'bg-brand border-b border-black/15' : 'bg-surface border-b border-line'
       )}
     >
       <div
@@ -74,7 +85,7 @@ function Navbar() {
                   e.preventDefault();
                   handleLandingScroll(item.targetId);
                 }}
-                className="inline-block cursor-pointer text-[#202124] transition-all duration-300 ease-out hover:-translate-y-1 hover:scale-110 hover:text-[#202124] active:scale-95 select-none"
+                className="inline-block cursor-pointer text-ink transition-all duration-300 ease-out hover:-translate-y-1 hover:scale-110 hover:text-ink active:scale-95 select-none"
               >
                 {item.label}
               </a>
@@ -92,6 +103,7 @@ function Navbar() {
                   {item.label}
                 </Link>
               ))}
+              <BecomeMentorLink className="text-ink-secondary hover:text-ink transition-colors" />
             </nav>
             <div className="flex items-center gap-2">
               {user ? (
@@ -100,12 +112,10 @@ function Navbar() {
                 </Button>
               ) : (
                 <>
-                  <Button asChild variant="ghost">
-                    <Link to={paths.login}>Sign in</Link>
+                  <Button variant="ghost" onClick={logIn}>
+                    Sign in
                   </Button>
-                  <Button asChild>
-                    <Link to={paths.signup}>Get started</Link>
-                  </Button>
+                  <Button onClick={() => signUp()}>Get started</Button>
                 </>
               )}
             </div>
@@ -118,7 +128,7 @@ function Navbar() {
 
 function Footer() {
   return (
-    <footer id="about-us" className="border-t border-black/10 bg-[#f8d24d] text-ink py-12 scroll-mt-16">
+    <footer id="about-us" className="border-t border-black/10 bg-brand text-ink py-12 scroll-mt-16">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3 items-start">
           {/* Col 1: Brand & tagline */}
@@ -200,6 +210,9 @@ function Footer() {
                     </Link>
                   </li>
                 ))}
+                <li>
+                  <BecomeMentorLink className="font-semibold hover:underline" />
+                </li>
               </ul>
             </div>
           </div>

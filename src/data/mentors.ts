@@ -1,54 +1,172 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { Mentor, MentorFilterValues, MentorProfileUpdate, MentorSort } from '@/types';
-import { parseISO } from 'date-fns';
-import { findOverlap } from '@/lib/slots';
-import { db, mutate, respond } from './mockServer';
+import { format, parseISO } from 'date-fns';
+import type { Mentor, MentorFilterValues, MentorProfileUpdate, ProfileExtras, Review, Slot, SlotStatus, Verification, VerificationStatus } from '@/types';
+import { CURRENCY } from '@/config/constants';
+import { fileUrl } from '@/config/env';
+import { useSession } from '@/auth/session';
+import { fromCents, roundRating, toCents } from '@/lib/format';
+import { emptyExtras } from '@/lib/profile';
+import { accountApi } from './account';
+import { api, isApiError, listAll, uploadFile } from './http';
 import { keys } from './keys';
 
-const sorters: Record<MentorSort, (a: Mentor, b: Mentor) => number> = {
-  rating: (a, b) => b.rating - a.rating,
-  price: (a, b) => a.hourlyRate - b.hourlyRate,
-  experience: (a, b) => b.experienceYears - a.experienceYears,
-};
+export interface MentorSummaryResponse {
+  id: string;
+  firstName: string;
+  lastName: string;
+  profileImageKey: string | null;
+  title: string | null;
+  organization: string | null;
+  industry: string | null;
+  bio: string | null;
+  headline: string;
+  location: string;
+  skills: string[];
+  experienceYears: number;
+  hourlyRateCents: number;
+  currency: string;
+  ratingAvg: number;
+  ratingCount: number;
+}
 
-// replace each function body with a real API call of the same signature
+export interface MentorResponse extends MentorSummaryResponse, ProfileExtras {
+  userId: string;
+  verificationStatus: VerificationStatus;
+}
+
+interface SlotResponse {
+  id: string;
+  startTime: string;
+  endTime: string;
+  status: SlotStatus;
+}
+
+interface ReviewResponse {
+  id: string;
+  author: string | null;
+  rating: number;
+  comment: string | null;
+  createdAt: string;
+}
+
+interface VerificationResponse {
+  id: string;
+  status: VerificationStatus;
+  reviewNote: string | null;
+  submittedAt: string;
+}
+
+// search and saved lists only return approved mentors, so a summary is always verified
+export function toMentor(m: MentorSummaryResponse | MentorResponse): Mentor {
+  const detail = 'userId' in m ? m : null;
+  return {
+    ...emptyExtras(),
+    ...(detail && {
+      links: detail.links,
+      experience: detail.experience,
+      education: detail.education,
+      certificates: detail.certificates,
+      projects: detail.projects,
+      languages: detail.languages,
+    }),
+    id: m.id,
+    userId: detail?.userId,
+    name: `${m.firstName} ${m.lastName}`.trim(),
+    title: m.title ?? '',
+    organization: m.organization ?? '',
+    industry: m.industry ?? '',
+    avatarUrl: fileUrl(m.profileImageKey),
+    bio: m.bio ?? '',
+    headline: m.headline,
+    location: m.location,
+    skills: m.skills,
+    experienceYears: m.experienceYears,
+    hourlyRate: fromCents(m.hourlyRateCents),
+    rating: roundRating(m.ratingAvg),
+    reviewCount: m.ratingCount,
+    isVerified: detail ? detail.verificationStatus === 'APPROVED' : true,
+    verificationStatus: detail?.verificationStatus,
+  };
+}
+
+const toSlot = (s: SlotResponse): Slot => ({ id: s.id, startsAt: s.startTime, endsAt: s.endTime, status: s.status });
+
+const toReview = (r: ReviewResponse): Review => ({
+  id: r.id,
+  author: r.author ?? 'Student',
+  rating: r.rating,
+  date: format(parseISO(r.createdAt), 'd MMM yyyy'),
+  text: r.comment ?? '',
+});
+
+// 404 is an expected answer here, the screens show their not found state
+async function orNull<T>(request: Promise<T>) {
+  try {
+    return await request;
+  } catch (error) {
+    if (isApiError(error, 404)) return null;
+    throw error;
+  }
+}
+
 export const mentorsApi = {
   search: (f: MentorFilterValues) =>
-    respond(() => {
-      const q = f.query.trim().toLowerCase();
-      return db.mentors
-        .filter((m) => !q || [m.name, m.title, m.organization, ...m.skills].some((v) => v.toLowerCase().includes(q)))
-        .filter((m) => f.industries.length === 0 || f.industries.includes(m.industry))
-        .filter((m) => !f.minRating || m.rating >= Number(f.minRating))
-        .filter((m) => !f.maxRate || m.hourlyRate <= Number(f.maxRate))
-        .sort(sorters[f.sort]);
-    }),
-  get: (id: string) => respond(() => db.mentors.find((m) => m.id === id) ?? null),
-  reviews: (mentorId: string) => respond(() => [...(db.newReviews[mentorId] ?? []), ...db.reviews]),
-  slots: (_mentorId: string) => respond(() => db.slots),
-  removeSlot: (slotId: string) => mutate(() => { db.slots = db.slots.filter((s) => s.id !== slotId); }),
-  // the server checks overlaps too because another tab may have added a slot meanwhile
+    listAll<MentorSummaryResponse>('/api/mentors', {
+      query: f.query.trim(),
+      industries: f.industries,
+      minRating: f.minRating,
+      maxRateCents: f.maxRate ? toCents(Number(f.maxRate)) : undefined,
+      sort: f.sort,
+    }).then((list) => list.map(toMentor)),
+
+  get: (id: string) => orNull(api<MentorResponse>(`/api/mentors/${id}`).then(toMentor)),
+
+  reviews: (mentorId: string) => listAll<ReviewResponse>(`/api/mentors/${mentorId}/reviews`).then((list) => list.map(toReview)),
+
+  // open slots students can book
+  slots: (mentorId: string) => api<SlotResponse[]>(`/api/mentors/${mentorId}/slots`).then((list) => list.map(toSlot)),
+
+  // the signed in mentor's upcoming slots in every status
+  mySlots: () =>
+    api<SlotResponse[]>('/api/mentors/me/slots', { query: { from: new Date().toISOString() } }).then((list) => list.map(toSlot)),
+
+  removeSlot: (slotId: string) => api<void>(`/api/mentors/me/slots/${slotId}`, { method: 'DELETE' }),
+
   addSlot: ({ startsAt, endsAt }: { startsAt: string; endsAt: string }) =>
-    mutate(() => {
-      if (findOverlap(parseISO(startsAt), parseISO(endsAt), db.slots)) throw new Error('This time overlaps an existing slot.');
-      db.slots = [...db.slots, { id: `s-${Date.now()}`, startsAt, endsAt, status: 'AVAILABLE' as const }]
-        .sort((a, b) => parseISO(a.startsAt).getTime() - parseISO(b.startsAt).getTime());
+    api<SlotResponse>('/api/mentors/me/slots', {
+      method: 'POST',
+      body: { startTime: startsAt, endTime: endsAt, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone },
     }),
 
-  getSavedMentors: () => respond(() => db.mentors.filter((m) => db.savedMentorIds.includes(m.id))),
-  saveMentor: (mentorId: string) =>
-    mutate(() => { if (!db.savedMentorIds.includes(mentorId)) db.savedMentorIds = [...db.savedMentorIds, mentorId]; }),
-  unsaveMentor: (mentorId: string) =>
-    mutate(() => { db.savedMentorIds = db.savedMentorIds.filter((id) => id !== mentorId); }),
+  getSavedMentors: () => listAll<MentorSummaryResponse>('/api/students/me/saved-mentors').then((list) => list.map(toMentor)),
+  saveMentor: (mentorId: string) => api<void>(`/api/students/me/saved-mentors/${mentorId}`, { method: 'PUT' }),
+  unsaveMentor: (mentorId: string) => api<void>(`/api/students/me/saved-mentors/${mentorId}`, { method: 'DELETE' }),
 
-  // the signed in mentor's own record, null if it has not been created yet
-  mine: () => respond(() => db.mentors.find((m) => m.id === db.myMentorId) ?? null),
-  updateMine: ({ firstName, lastName, ...details }: MentorProfileUpdate) =>
-    mutate(() => {
-      db.mentors = db.mentors.map((m) =>
-        m.id === db.myMentorId ? { ...m, ...structuredClone(details), name: `${firstName} ${lastName}`.trim() } : m,
-      );
-    }),
+  // null until the mentor finishes onboarding
+  mine: () => orNull(api<MentorResponse>('/api/mentors/me').then(toMentor)),
+
+  // newest first
+  myVerifications: () =>
+    api<VerificationResponse[]>('/api/mentors/me/verifications').then((list) =>
+      list
+        .map((v): Verification => ({ id: v.id, status: v.status, reviewNote: v.reviewNote, submittedAt: v.submittedAt }))
+        .sort((a, b) => b.submittedAt.localeCompare(a.submittedAt)),
+    ),
+
+  submitVerification: async (file: File) => {
+    const documentKey = await uploadFile('/api/mentors/me/verification-upload-url', file);
+    await api<VerificationResponse>('/api/mentors/me/verifications', { method: 'POST', body: { documentKey } });
+  },
+
+  // name and photo are saved on the account, the rest on the mentor profile
+  updateMine: async ({ firstName, lastName, avatarUrl, hourlyRate, ...details }: MentorProfileUpdate) => {
+    const user = await accountApi.update({ firstName, lastName, avatarUrl });
+    await api<MentorResponse>('/api/mentors/me', {
+      method: 'PUT',
+      body: { ...details, hourlyRateCents: toCents(hourlyRate), currency: CURRENCY },
+    });
+    return user;
+  },
 };
 
 export const useMentors = (filters: MentorFilterValues) =>
@@ -61,7 +179,9 @@ export const useMentorReviews = (mentorId: string) =>
   useQuery({ queryKey: keys.reviews(mentorId), queryFn: () => mentorsApi.reviews(mentorId) });
 
 export const useMentorSlots = (mentorId: string) =>
-  useQuery({ queryKey: keys.slots(mentorId), queryFn: () => mentorsApi.slots(mentorId) });
+  useQuery({ queryKey: keys.slots(mentorId), queryFn: () => mentorsApi.slots(mentorId), enabled: !!mentorId });
+
+export const useMySlots = () => useQuery({ queryKey: keys.mySlots, queryFn: mentorsApi.mySlots });
 
 export function useRemoveSlot() {
   const client = useQueryClient();
@@ -97,18 +217,34 @@ export function useUnsaveMentor() {
   });
 }
 
-export const useMyMentorProfile =() => useQuery({ queryKey: keys.myMentorProfile, queryFn: mentorsApi.mine });
+export const useMyMentorProfile = () => useQuery({ queryKey: keys.myMentorProfile, queryFn: mentorsApi.mine });
+
+export const useMyVerifications = () => useQuery({ queryKey: keys.myVerifications, queryFn: mentorsApi.myVerifications });
+
+export function useSubmitVerification() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: mentorsApi.submitVerification,
+    onSuccess: () =>
+      Promise.all([
+        client.invalidateQueries({ queryKey: keys.myMentorProfile }),
+        client.invalidateQueries({ queryKey: keys.myVerifications }),
+      ]),
+  });
+}
 
 export function useUpdateMyMentorProfile() {
   const client = useQueryClient();
   return useMutation({
     mutationFn: mentorsApi.updateMine,
-    // the public list and profile pages show the same record so they refresh too
-    onSuccess: () =>
-      Promise.all([
+    // the header shows the account name and photo, the public pages show the profile
+    onSuccess: (user) => {
+      useSession.setState({ user });
+      return Promise.all([
         client.invalidateQueries({ queryKey: keys.myMentorProfile }),
         client.invalidateQueries({ queryKey: ['mentors'] }),
         client.invalidateQueries({ queryKey: ['mentor'] }),
-      ]),
+      ]);
+    },
   });
 }

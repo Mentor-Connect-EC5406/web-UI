@@ -1,41 +1,23 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { OnboardingDetails } from '@/types';
-import { useSession } from './session';
+import { readSignupRole, rememberSignupRole, useSession } from './session';
 
-const mentor: OnboardingDetails = {
-  role: 'MENTOR', firstName: 'Kasun', lastName: 'Fernando', title: 'Engineer', organization: 'WSO2',
-  industry: 'Software Engineering', experienceYears: 5, bio: 'I help students.',
-};
-const student: OnboardingDetails = {
-  role: 'STUDENT', firstName: 'Kasun', lastName: 'Fernando', university: 'SLIIT', faculty: 'Computing', academicYear: 2,
-};
+describe('session store', () => {
+  beforeEach(() => rememberSignupRole(null));
 
-describe('session sign-up flow', () => {
-  beforeEach(() => useSession.getState().signOut());
-
-  it('starts signed out', () => {
-    expect(useSession.getState().user).toBeNull();
-    expect(useSession.getState().newAccount).toBeNull();
+  it('starts loading and signed out until asgardeo answers', () => {
+    const { user, newAccount, status } = useSession.getState();
+    expect([user, newAccount, status]).toEqual([null, null, 'loading']);
   });
 
-  it('sign-up creates a pending account without a role', () => {
-    useSession.getState().signUp();
-    const { user, newAccount } = useSession.getState();
-    expect(user).toBeNull();
-    expect(newAccount?.email).toBeTruthy();
+  it('remembers the mentor choice across the sign in redirect', () => {
+    rememberSignupRole('MENTOR');
+    expect(readSignupRole()).toBe('MENTOR');
+    rememberSignupRole(null);
+    expect(readSignupRole()).toBeNull();
   });
 
-  it('completing onboarding signs the person in with the chosen role', async () => {
-    useSession.getState().signUp();
-    await useSession.getState().completeOnboarding(mentor);
-    const { user, newAccount } = useSession.getState();
-    expect(user?.role).toBe('MENTOR');
-    expect(user?.name).toBe('Kasun Fernando');
-    expect(newAccount).toBeNull();
-  });
-
-  it('ignores onboarding when there is no pending account', async () => {
-    await useSession.getState().completeOnboarding(student);
-    expect(useSession.getState().user).toBeNull();
+  it('ignores a stored value that is not a role', () => {
+    sessionStorage.setItem('mc_signup_role', 'ADMIN');
+    expect(readSignupRole()).toBeNull();
   });
 });

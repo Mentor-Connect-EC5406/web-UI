@@ -5,15 +5,14 @@ import { RouterProvider } from 'react-router-dom';
 import { queryClient } from './data/queryClient';
 import { router } from './app/router';
 import { AsgardeoSession } from './auth/AsgardeoSession';
-import { USE_MOCKS } from './config/env';
 import './styles/globals.css';
 
-const app = (
-  <QueryClientProvider client={queryClient}>
-    <RouterProvider router={router} />
-  </QueryClientProvider>
-);
-
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>{USE_MOCKS ? app : <AsgardeoSession>{app}</AsgardeoSession>}</StrictMode>,
+  <StrictMode>
+    <AsgardeoSession>
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>
+    </AsgardeoSession>
+  </StrictMode>,
 );

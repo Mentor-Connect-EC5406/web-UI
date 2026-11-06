@@ -1,5 +1,5 @@
 import { lazy } from 'react';
-import type { RouteObject } from 'react-router-dom';
+import { Navigate, type RouteObject } from 'react-router-dom';
 import { PublicLayout } from '@/layouts/PublicLayout';
 import { ContentLayout } from '@/layouts/ContentLayout';
 import { AuthLayout } from '@/layouts/AuthLayout';
@@ -12,7 +12,6 @@ const MentorsPage = lazy(() => import('@/pages/public/MentorsPage'));
 const MentorProfilePage = lazy(() => import('@/pages/public/MentorProfilePage'));
 const LoginPage = lazy(() => import('@/pages/auth/LoginPage'));
 const SignupPage = lazy(() => import('@/pages/auth/SignupPage'));
-const MentorRegistrationPage = lazy(() => import('@/pages/auth/MentorRegistrationPage'));
 const OnboardingPage = lazy(() => import('@/pages/auth/OnboardingPage'));
 
 // marketing site and public mentor discovery
@@ -46,7 +45,8 @@ export const authRoutes: RouteObject = {
       children: [
         { path: paths.login, element: <LoginPage /> },
         { path: paths.signup, element: <SignupPage /> },
-        { path: paths.mentorRegistration, element: <MentorRegistrationPage /> },
+        // mentors sign up through asgardeo like everyone else, the role is remembered for onboarding
+        { path: paths.mentorRegistration, element: <Navigate to={`${paths.signup}?role=mentor`} replace /> },
       ],
     },
     { path: paths.onboarding, element: <OnboardingPage /> },
