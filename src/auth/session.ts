@@ -24,6 +24,28 @@ export function readSignupRole(): OnboardingRole | null {
   }
 }
 
+const RETURN_PATH_KEY = 'mc_return_path';
+
+// the page someone was sent to log in from, e.g. an invitation link, opened again after the asgardeo redirect
+export function rememberReturnPath(path: string | null) {
+  try {
+    if (path) sessionStorage.setItem(RETURN_PATH_KEY, path);
+    else sessionStorage.removeItem(RETURN_PATH_KEY);
+  } catch {
+    // the person then lands on their dashboard
+  }
+}
+
+export function takeReturnPath(): string | null {
+  try {
+    const path = sessionStorage.getItem(RETURN_PATH_KEY);
+    sessionStorage.removeItem(RETURN_PATH_KEY);
+    return path;
+  } catch {
+    return null;
+  }
+}
+
 export interface SessionState {
   user: User | null;
   // signed in with asgardeo but not registered with us yet

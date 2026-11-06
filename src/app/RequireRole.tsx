@@ -13,7 +13,7 @@ export function RequireRole({ role }: { role: Role }) {
 
   if (status === 'loading') return <LoadingState message="Checking your account…" fullscreen />;
   if (newAccount) return <Navigate to={paths.onboarding} replace />;
-  if (!user) return <Navigate to={paths.login} state={{ from: location.pathname }} replace />;
+  if (!user) return <Navigate to={paths.login} state={{ from: `${location.pathname}${location.search}` }} replace />;
   if (user.role !== role) return <Navigate to={paths.forbidden} replace />;
   return <Outlet />;
 }

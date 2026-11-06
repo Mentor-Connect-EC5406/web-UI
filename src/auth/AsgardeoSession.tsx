@@ -2,13 +2,13 @@ import { useEffect, useRef, type ReactNode } from 'react';
 import { AuthProvider, useAuthContext } from '@asgardeo/auth-react';
 import { ASGARDEO } from '@/config/env';
 import { accountApi } from '@/data/account';
-import { isApiError, setAccessTokenProvider } from '@/data/http';
+import { isApiError, setAccessTokenProvider, setSessionExpiredHandler } from '@/data/http';
 import { queryClient } from '@/data/queryClient';
 import { router } from '@/app/router';
 import { homePathFor, paths } from '@/app/paths';
 import type { NewAccount } from '@/types';
 import { accessTokenProblem } from '@/lib/accessToken';
-import { readSignupRole, rememberSignupRole, useSession } from './session';
+import { readSignupRole, rememberSignupRole, takeReturnPath, useSession } from './session';
 
 // set before leaving for asgardeo so we know to route the person once they come back
 const RETURNING_KEY = 'mc_returning_from_sign_in';
@@ -20,6 +20,8 @@ const config = {
   signInRedirectURL: window.location.origin,
   signOutRedirectURL: window.location.origin,
   scope: ['openid', 'profile', 'email'],
+  // access tokens last about an hour, the sdk renews them with the refresh token before they expire
+  periodicTokenRefresh: true,
 };
 
 function markReturning(value: boolean) {
@@ -46,7 +48,9 @@ function routeAfterSignIn() {
   const { user, newAccount, error } = useSession.getState();
   // an existing account keeps its role, so a remembered sign up choice no longer applies
   if (user) rememberSignupRole(null);
-  if (user) void router.navigate(homePathFor(user.role), { replace: true });
+  const back = takeReturnPath();
+  // only a page inside the person's own area, a student link never opens for a mentor
+  if (user) void router.navigate(back?.startsWith(homePathFor(user.role)) ? back : homePathFor(user.role), { replace: true });
   else if (newAccount) void router.navigate(readSignupRole() === 'MENTOR' ? `${paths.onboarding}?role=mentor` : paths.onboarding, { replace: true });
   else if (error) void router.navigate(paths.login, { replace: true });
 }
@@ -102,6 +106,21 @@ async function loadAccount(auth: AuthContext, isCancelled: () => boolean) {
   if (!isCancelled()) routeAfterSignIn();
 }
 
+// the sdk ignores signIn while it still holds a valid session, so reload the account instead of doing nothing
+async function signInOrReload(auth: AuthContext) {
+  markReturning(true);
+  if (await auth.isAuthenticated().catch(() => false)) await loadAccount(auth, () => false);
+  else await auth.signIn();
+}
+
+// a request was refused even with a fresh token, so the person has to sign in again
+function expireSession() {
+  if (!useSession.getState().user) return;
+  queryClient.clear();
+  useSession.setState({ user: null, newAccount: null, error: 'Your session has expired. Log in again to continue.' });
+  void router.navigate(paths.login, { replace: true, state: { from: window.location.pathname } });
+}
+
 function SessionBridge() {
   const auth = useAuthContext();
   // the sdk functions are not guaranteed to be stable, effects read the latest ones from here
@@ -111,27 +130,22 @@ function SessionBridge() {
   });
 
   useEffect(() => {
-    setAccessTokenProvider(async () => {
+    setAccessTokenProvider(async ({ refresh } = {}) => {
       try {
+        if (refresh) await authRef.current.refreshAccessToken();
         return await authRef.current.getAccessToken();
       } catch {
         return null;
       }
     });
+    setSessionExpiredHandler(expireSession);
 
     useSession.setState({
-      signIn: () => {
-        markReturning(true);
-        // the sdk ignores signIn while its session is live, so reload the account instead of doing nothing
-        if (authRef.current.state.isAuthenticated) void loadAccount(authRef.current, () => false);
-        else void authRef.current.signIn();
-      },
+      signIn: () => void signInOrReload(authRef.current),
       signUp: (role) => {
         rememberSignupRole(role ?? null);
-        markReturning(true);
         // the asgardeo page offers create account next to sign in
-        if (authRef.current.state.isAuthenticated) void loadAccount(authRef.current, () => false);
-        else void authRef.current.signIn();
+        void signInOrReload(authRef.current);
       },
       signOut: () => {
         queryClient.clear();
