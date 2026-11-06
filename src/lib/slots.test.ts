@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import type { Slot } from '@/types';
-import { rangesOverlap, validateNewSlot } from './slots';
+import { buildSlotRanges, rangesOverlap } from './slots';
 
 // local times so the test does not depend on the machine timezone
 const at = (date: string, time: string) => new Date(`${date}T${time}`).toISOString();
 const slot = (start: string, end: string): Slot => ({ id: start, startsAt: at('2026-11-10', start), endsAt: at('2026-11-10', end), status: 'AVAILABLE' });
 const now = new Date('2026-11-01T09:00');
 const existing = [slot('10:00', '11:00')];
+const input = (startTime: string, endTime: string, repeatWeeks = 1, date = '2026-11-10') => ({ date, startTime, endTime, repeatWeeks });
 
 describe('rangesOverlap', () => {
   const d = (t: string) => new Date(`2026-11-10T${t}`);
@@ -19,26 +20,54 @@ describe('rangesOverlap', () => {
   });
 });
 
-describe('validateNewSlot', () => {
-  it('requires both date and time', () => {
-    const result = validateNewSlot('', '', existing, now);
-    expect(result).toEqual({ ok: false, errors: { date: 'Choose a date.', time: 'Choose a start time.' } });
+describe('buildSlotRanges', () => {
+  it('requires a date, start and end', () => {
+    expect(buildSlotRanges(input('', ''), existing, now)).toEqual({
+      ok: false,
+      errors: { startTime: 'Choose a start time.', endTime: 'Choose an end time.' },
+    });
   });
 
-  it('rejects a time that has passed', () => {
-    const result = validateNewSlot('2026-11-01', '08:00', existing, now);
-    expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.errors.time).toMatch(/already passed/);
+  it('rejects a range shorter than one session or not in whole sessions', () => {
+    const short = buildSlotRanges(input('12:00', '12:30'), existing, now);
+    const uneven = buildSlotRanges(input('12:00', '13:30'), existing, now);
+    expect(!short.ok && short.errors.endTime).toMatch(/at least/);
+    expect(!uneven.ok && uneven.errors.endTime).toMatch(/whole sessions/);
   });
 
-  it('rejects a slot that overlaps an existing one', () => {
-    const result = validateNewSlot('2026-11-10', '10:30', existing, now);
-    expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.errors.time).toMatch(/overlaps/);
+  it('rejects a start that has passed', () => {
+    const result = buildSlotRanges(input('08:00', '09:00', 1, '2026-11-01'), existing, now);
+    expect(!result.ok && result.errors.startTime).toMatch(/already passed/);
   });
 
-  it('accepts a back to back slot with the session length', () => {
-    const result = validateNewSlot('2026-11-10', '11:00', existing, now);
-    expect(result).toEqual({ ok: true, startsAt: at('2026-11-10', '11:00'), endsAt: at('2026-11-10', '12:00') });
+  it('splits a range into one hour slots and skips the existing one', () => {
+    const result = buildSlotRanges(input('09:00', '12:00'), existing, now);
+    expect(result).toEqual({
+      ok: true,
+      skipped: 1,
+      ranges: [
+        { startsAt: at('2026-11-10', '09:00'), endsAt: at('2026-11-10', '10:00') },
+        { startsAt: at('2026-11-10', '11:00'), endsAt: at('2026-11-10', '12:00') },
+      ],
+    });
+  });
+
+  it('repeats the range weekly', () => {
+    const result = buildSlotRanges(input('14:00', '15:00', 3), existing, now);
+    expect(result.ok && result.ranges.map((r) => r.startsAt)).toEqual([
+      at('2026-11-10', '14:00'),
+      at('2026-11-17', '14:00'),
+      at('2026-11-24', '14:00'),
+    ]);
+  });
+
+  it('refuses a save that would create too many slots', () => {
+    const result = buildSlotRanges(input('00:00', '23:00', 8), existing, now);
+    expect(!result.ok && result.errors.endTime).toMatch(/at most/);
+  });
+
+  it('explains when every time overlaps', () => {
+    const result = buildSlotRanges(input('10:00', '11:00'), existing, now);
+    expect(!result.ok && result.errors.startTime).toMatch(/overlap/);
   });
 });

@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, Bookmark, Calendar, CalendarCheck, Search, Target } from 'lucide-react';
-import type { Session } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { Card, CardBody, CardHeader } from '@/components/ui/Card';
 import { Progress } from '@/components/ui/Progress';
@@ -17,11 +16,10 @@ import { useSession } from '@/auth/session';
 import { useGoals } from '@/data/goals';
 import { useMentors, useSavedMentors } from '@/data/mentors';
 import { useStudentSessions } from '@/data/sessions';
+import { isUpcoming, joinState, sortByStart } from '@/lib/sessions';
 import { firstName } from '@/lib/format';
 import { EMPTY_FILTERS } from '@/lib/mentorFilters';
 import { paths } from '@/app/paths';
-
-const isUpcoming = (s: Session) => s.status === 'CONFIRMED' || s.status === 'PENDING';
 
 // shows upcoming sessions, goals progress and recommended mentors
 export default function StudentDashboardPage() {
@@ -57,14 +55,20 @@ export default function StudentDashboardPage() {
             <h2 id="next-session" className="mb-3 text-lg font-semibold text-ink">Next session</h2>
             <AsyncContent query={sessions} loading={<ListSkeleton rows={1} rowClassName="h-28" />}>
               {(list) => {
-                const next = list.find(isUpcoming);
+                const next = sortByStart(list.filter(isUpcoming))[0];
                 return next ? (
                   <SessionCard
                     session={next}
                     counterpart="mentor"
-                    actions={next.meetingUrl && (
-                      <Button asChild size="sm"><a href={next.meetingUrl} target="_blank" rel="noreferrer">Join session</a></Button>
-                    )}
+                    detailsHref={paths.student.session(next.id)}
+                    actions={
+                      <>
+                        {joinState(next) === 'open' && next.meetingUrl && (
+                          <Button asChild size="sm"><a href={next.meetingUrl} target="_blank" rel="noreferrer">Join session</a></Button>
+                        )}
+                        <Button asChild size="sm" variant="secondary"><Link to={paths.student.session(next.id)}>View details</Link></Button>
+                      </>
+                    }
                   />
                 ) : (
                   <Card className="p-6 text-sm text-ink-secondary">No upcoming sessions. Find a mentor to book your first one.</Card>

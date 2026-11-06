@@ -14,7 +14,7 @@ import { useSession } from '@/auth/session';
 import { useMyMentorProfile, useMyVerifications, useSubmitVerification } from '@/data/mentors';
 import { useBookingRequests, useMentorSessions, useRespondToRequest } from '@/data/sessions';
 import { firstName, formatDate, formatSessionTime, formatTime } from '@/lib/format';
-import { isUpcoming, mentoredStudents } from '@/lib/sessions';
+import { isUpcoming, joinState, mentoredStudents, sortByStart } from '@/lib/sessions';
 import { paths } from '@/app/paths';
 
 // shows todays sessions and pending booking requests
@@ -64,7 +64,7 @@ export default function MentorDashboardPage() {
             <CardBody>
               <AsyncContent query={sessions} loading={<ListSkeleton rows={2} rowClassName="h-16" />}>
                 {(all) => {
-                  const list = all.filter(isUpcoming);
+                  const list = sortByStart(all.filter((s) => s.status === 'CONFIRMED'));
                   return list.length === 0 ? (
                     <p className="py-4 text-center text-sm text-ink-secondary">No upcoming sessions.</p>
                   ) : (
@@ -74,9 +74,14 @@ export default function MentorDashboardPage() {
                           key={s.id}
                           name={s.studentName}
                           detail={`${s.topic} · ${formatDate(s.startsAt)} · ${formatTime(s.startsAt)}`}
-                          actions={s.meetingUrl && (
-                            <Button asChild size="sm"><a href={s.meetingUrl} target="_blank" rel="noreferrer">Join</a></Button>
-                          )}
+                          actions={
+                            <>
+                              {joinState(s) === 'open' && s.meetingUrl && (
+                                <Button asChild size="sm"><a href={s.meetingUrl} target="_blank" rel="noreferrer">Join</a></Button>
+                              )}
+                              <Button asChild size="sm" variant="secondary"><Link to={paths.mentorArea.session(s.id)}>Details</Link></Button>
+                            </>
+                          }
                         />
                       ))}
                     </div>

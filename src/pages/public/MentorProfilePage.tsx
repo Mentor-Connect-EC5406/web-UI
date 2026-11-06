@@ -1,10 +1,11 @@
+import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Briefcase, MapPin, UserX } from 'lucide-react';
+import { Briefcase, CheckCircle2, Handshake, MapPin, UserX } from 'lucide-react';
 import type { Mentor, Role } from '@/types';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
+import { Card, CardBody, CardHeader } from '@/components/ui/Card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs';
 import { AsyncContent } from '@/components/common/AsyncContent';
 import { EmptyState } from '@/components/common/EmptyState';
@@ -12,11 +13,15 @@ import { ListSkeleton } from '@/components/common/ListSkeleton';
 import { RatingStars } from '@/components/common/RatingStars';
 import { VerifiedBadge } from '@/components/common/VerifiedBadge';
 import { BookingPanel } from '@/components/booking/BookingPanel';
+import { MentorshipRequestDialog } from '@/components/mentorship/MentorshipRequestDialog';
 import { LinkList } from '@/components/profile/ProfileLists';
 import { ProfileExtrasSections } from '@/components/profile/ProfileView';
 import { useSession } from '@/auth/session';
 import { useMentor, useMentorReviews, useMentorSlots } from '@/data/mentors';
+import { useRequestMentorship } from '@/data/mentorships';
 import { useBookSession } from '@/data/sessions';
+import { isFeatureOn } from '@/config/features';
+import { paths } from '@/app/paths';
 import { formatPrice } from '@/lib/format';
 import { useAuthRedirect } from '@/auth/useAuthRedirect';
 
@@ -92,6 +97,38 @@ function bookingBlocked(role: Role | undefined, onLogIn: () => void) {
   return <p className="mt-4 text-sm text-ink-secondary">Only students can book sessions.</p>;
 }
 
+// regular sessions over months, the mentor approves and sets the schedule
+function MentorshipRequestCard({ mentor }: { mentor: Mentor }) {
+  const request = useRequestMentorship();
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Card>
+      <CardHeader title={<><Handshake className="size-4 text-ink-secondary" aria-hidden /> Long term mentorship</>} />
+      <CardBody className="space-y-3">
+        {request.isSuccess ? (
+          <p role="status" className="flex items-start gap-2 rounded-xl bg-success-soft p-3 text-sm text-success">
+            <CheckCircle2 className="mt-0.5 size-4 shrink-0" aria-hidden />
+            <span>Request sent to {mentor.name}. <Link to={paths.student.mentorships} className="font-semibold underline">Follow it in Mentorships</Link>.</span>
+          </p>
+        ) : (
+          <p className="text-sm text-ink-secondary">Meet {mentor.name} every week, every two weeks or every month to work towards a bigger goal.</p>
+        )}
+        <Button variant="secondary" className="w-full" onClick={() => { request.reset(); setOpen(true); }}>Request mentorship</Button>
+      </CardBody>
+      {open && (
+        <MentorshipRequestDialog
+          mentorName={mentor.name}
+          saving={request.isPending}
+          saveError={request.error?.message}
+          onClose={() => setOpen(false)}
+          onSubmit={(input) => request.mutate({ ...input, mentorId: mentor.id }, { onSuccess: () => setOpen(false) })}
+        />
+      )}
+    </Card>
+  );
+}
+
 // mentor profile with about tab, reviews tab and booking panel
 export default function MentorProfilePage({ backPath }: MentorProfilePageProps) {
   const { id = '' } = useParams();
@@ -133,16 +170,20 @@ export default function MentorProfilePage({ backPath }: MentorProfilePageProps) 
                 </Tabs>
               </div>
 
-              <AsyncContent query={slots} loading={<ListSkeleton rows={1} rowClassName="h-80" />}>
-                {(slotList) => (
-                  <BookingPanel
-                    mentor={mentor}
-                    slots={slotList}
-                    onBook={(slot) => book.mutateAsync({ mentor, slot, studentName: user?.name ?? 'Guest' })}
-                    blocked={bookingBlocked(user?.role, logIn)}
-                  />
-                )}
-              </AsyncContent>
+              <div className="space-y-6">
+                <AsyncContent query={slots} loading={<ListSkeleton rows={1} rowClassName="h-80" />}>
+                  {(slotList) => (
+                    <BookingPanel
+                      mentor={mentor}
+                      slots={slotList}
+                      onBook={(slot, topic) => book.mutateAsync({ slotId: slot.id, topic })}
+                      blocked={bookingBlocked(user?.role, logIn)}
+                      sessionsHref={user?.role === 'STUDENT' ? paths.student.sessions : undefined}
+                    />
+                  )}
+                </AsyncContent>
+                {isFeatureOn('mentorships') && user?.role === 'STUDENT' && <MentorshipRequestCard mentor={mentor} />}
+              </div>
             </div>
           </div>
         )

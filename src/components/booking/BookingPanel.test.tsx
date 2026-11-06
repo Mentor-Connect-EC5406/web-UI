@@ -21,11 +21,12 @@ const mentor: Mentor = {
   isVerified: true,
 };
 
+const now = new Date('2026-11-20T09:00:00Z');
 const slot: Slot = { id: 's1', startsAt: '2026-12-01T04:30:00.000Z', endsAt: '2026-12-01T05:30:00.000Z', status: 'AVAILABLE' };
 
 describe('BookingPanel', () => {
   it('says when the mentor has no free times', () => {
-    render(<BookingPanel mentor={mentor} slots={[]} onBook={vi.fn()} />);
+    render(<BookingPanel mentor={mentor} slots={[]} onBook={vi.fn()} now={now} />);
     expect(screen.getByText(/no free times right now/i)).toBeTruthy();
   });
 
@@ -37,11 +38,12 @@ describe('BookingPanel', () => {
 
   it('shows why the server refused the booking', async () => {
     const onBook = vi.fn().mockRejectedValue(new Error('Slot is not available'));
-    render(<BookingPanel mentor={mentor} slots={[slot]} onBook={onBook} />);
-    fireEvent.click(screen.getByRole('button', { pressed: false }));
+    render(<BookingPanel mentor={mentor} slots={[slot]} onBook={onBook} now={now} />);
+    fireEvent.click(screen.getByRole('group', { name: 'Choose a time' }).querySelector('button')!);
     fireEvent.click(screen.getByRole('button', { name: /review booking/i }));
-    fireEvent.click(screen.getByRole('button', { name: /confirm booking/i }));
+    fireEvent.change(screen.getByLabelText(/what would you like to discuss/i), { target: { value: 'CV review' } });
+    fireEvent.click(screen.getByRole('button', { name: /send request/i }));
     expect(await screen.findByText(/Slot is not available/)).toBeTruthy();
-    expect(onBook).toHaveBeenCalledWith(slot);
+    expect(onBook).toHaveBeenCalledWith(slot, 'CV review');
   });
 });

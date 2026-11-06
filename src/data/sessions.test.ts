@@ -8,7 +8,7 @@ const booking = (patch: Partial<BookingResponse>): BookingResponse => ({
 });
 
 function respondWith(body: unknown) {
-  const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(body), { status: 200 }));
+  const fetchMock = vi.fn().mockImplementation(async () => new Response(JSON.stringify(body), { status: 200 }));
   vi.stubGlobal('fetch', fetchMock);
   return fetchMock;
 }
@@ -42,5 +42,25 @@ describe('sessionsApi', () => {
     const fetchMock = respondWith({});
     await sessionsApi.review({ sessionId: 'b1', rating: 5, text: '  Great advice for my internship plans.  ' });
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({ rating: 5, comment: 'Great advice for my internship plans.' });
+  });
+});
+
+describe('sessionsApi changes', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('books with the topic and leaves an empty topic out', async () => {
+    const fetchMock = respondWith(booking({}));
+    await sessionsApi.book({ slotId: 'slot-1', topic: '  CV review  ' });
+    await sessionsApi.book({ slotId: 'slot-1', topic: ' ' });
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({ slotId: 'slot-1', topic: 'CV review' });
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({ slotId: 'slot-1' });
+  });
+
+  it('sends a cancel reason only when one is given', async () => {
+    const fetchMock = respondWith(booking({}));
+    await sessionsApi.cancel({ sessionId: 'b1', reason: 'Exam that day' });
+    await sessionsApi.cancel({ sessionId: 'b1' });
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({ reason: 'Exam that day' });
+    expect(fetchMock.mock.calls[1][1].body).toBeUndefined();
   });
 });

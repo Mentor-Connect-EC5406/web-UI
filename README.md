@@ -17,6 +17,9 @@ npm run dev
 ```
 
 Copy `.env.example` to `.env.local` and fill in the API and Asgardeo values.
+Screens still waiting on backend endpoints are hidden; list them in
+`VITE_FEATURES` (e.g. `VITE_FEATURES=mentorships,sessionTasks`) to work on
+them locally. See "Waiting on the backend" in `docs/API_HANDOFF.md`.
 Open http://localhost:5173 (the port is fixed because Asgardeo redirects back
 to it) and log in with an Asgardeo account. A first login goes to onboarding,
 where you choose student or mentor.

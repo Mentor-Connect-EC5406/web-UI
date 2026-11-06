@@ -7,6 +7,7 @@ import { queryClient } from '@/data/queryClient';
 import { router } from '@/app/router';
 import { homePathFor, paths } from '@/app/paths';
 import type { NewAccount } from '@/types';
+import { accessTokenProblem } from '@/lib/accessToken';
 import { readSignupRole, rememberSignupRole, useSession } from './session';
 
 // set before leaving for asgardeo so we know to route the person once they come back
@@ -55,6 +56,52 @@ function claimText(claims: Record<string, unknown> | null, key: string) {
   return typeof value === 'string' ? value.trim() : '';
 }
 
+type AuthContext = ReturnType<typeof useAuthContext>;
+
+// a 401 after a successful asgardeo login means the api rejected the token itself
+async function rejectedTokenMessage(auth: AuthContext) {
+  const token = await auth.getAccessToken().catch(() => null);
+  return (
+    accessTokenProblem(token, ASGARDEO.clientId) ??
+    'The MentorConnect server could not verify your sign in. Try again, or sign out and sign in with your account again.'
+  );
+}
+
+// finds the signed in person in our api, a 404 means they still have to finish onboarding
+async function loadAccount(auth: AuthContext, isCancelled: () => boolean) {
+  useSession.setState({ status: 'loading' });
+  try {
+    const user = await accountApi.me();
+    if (isCancelled()) return;
+    useSession.setState({ user, newAccount: null, status: 'ready', error: null });
+  } catch (error) {
+    if (isCancelled()) return;
+    if (isApiError(error, 404)) {
+      const claims = (await auth.getDecodedIDToken().catch(() => null)) as Record<string, unknown> | null;
+      const firstName = claimText(claims, 'given_name');
+      const lastName = claimText(claims, 'family_name');
+      const email = claimText(claims, 'email') || auth.state.email || '';
+      const newAccount: NewAccount = {
+        firstName,
+        lastName,
+        email,
+        name: `${firstName} ${lastName}`.trim() || auth.state.displayName || email,
+      };
+      if (!isCancelled()) useSession.setState({ user: null, newAccount, status: 'ready', error: null });
+    } else {
+      const message = isApiError(error, 401)
+        ? await rejectedTokenMessage(auth)
+        : isApiError(error, 403)
+          ? 'Your account is not active. Contact the MentorConnect team for help.'
+          : error instanceof Error
+            ? error.message
+            : 'We could not load your account. Please try again.';
+      useSession.setState({ user: null, newAccount: null, status: 'ready', error: message });
+    }
+  }
+  if (!isCancelled()) routeAfterSignIn();
+}
+
 function SessionBridge() {
   const auth = useAuthContext();
   // the sdk functions are not guaranteed to be stable, effects read the latest ones from here
@@ -75,13 +122,16 @@ function SessionBridge() {
     useSession.setState({
       signIn: () => {
         markReturning(true);
-        void authRef.current.signIn();
+        // the sdk ignores signIn while its session is live, so reload the account instead of doing nothing
+        if (authRef.current.state.isAuthenticated) void loadAccount(authRef.current, () => false);
+        else void authRef.current.signIn();
       },
       signUp: (role) => {
         rememberSignupRole(role ?? null);
         markReturning(true);
         // the asgardeo page offers create account next to sign in
-        void authRef.current.signIn();
+        if (authRef.current.state.isAuthenticated) void loadAccount(authRef.current, () => false);
+        else void authRef.current.signIn();
       },
       signOut: () => {
         queryClient.clear();
@@ -121,36 +171,7 @@ function SessionBridge() {
     }
 
     let cancelled = false;
-    (async () => {
-      try {
-        const user = await accountApi.me();
-        if (cancelled) return;
-        useSession.setState({ user, newAccount: null, status: 'ready', error: null });
-      } catch (error) {
-        if (cancelled) return;
-        if (isApiError(error, 404)) {
-          const claims = (await authRef.current.getDecodedIDToken().catch(() => null)) as Record<string, unknown> | null;
-          const firstName = claimText(claims, 'given_name');
-          const lastName = claimText(claims, 'family_name');
-          const email = claimText(claims, 'email') || authRef.current.state.email || '';
-          const newAccount: NewAccount = {
-            firstName,
-            lastName,
-            email,
-            name: `${firstName} ${lastName}`.trim() || authRef.current.state.displayName || email,
-          };
-          if (!cancelled) useSession.setState({ user: null, newAccount, status: 'ready', error: null });
-        } else {
-          const message = isApiError(error, 403)
-            ? 'Your account is not active. Contact the MentorConnect team for help.'
-            : error instanceof Error
-              ? error.message
-              : 'We could not load your account. Please try again.';
-          useSession.setState({ user: null, newAccount: null, status: 'ready', error: message });
-        }
-      }
-      if (!cancelled) routeAfterSignIn();
-    })();
+    void loadAccount(authRef.current, () => cancelled);
 
     return () => {
       cancelled = true;

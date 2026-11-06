@@ -1,5 +1,6 @@
 import { Info } from 'lucide-react';
 import { Input, Textarea } from '@/components/ui/Input';
+import { Combobox } from '@/components/ui/Combobox';
 import { Select } from '@/components/ui/Select';
 import { FormField } from '@/components/common/FormField';
 import { ACADEMIC_YEARS, INDUSTRIES, UNIVERSITIES } from '@/config/options';
@@ -24,7 +25,7 @@ export function StudentDetailsFields() {
   return (
     <>
       <FormField htmlFor="university" label="University">
-        <Select id="university" name="university" placeholder="Select your university" options={UNIVERSITIES} />
+        <Combobox id="university" name="university" placeholder="Start typing your university" suggestions={UNIVERSITIES} maxLength={200} />
       </FormField>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <FormField htmlFor="faculty" label="Faculty or degree" required>

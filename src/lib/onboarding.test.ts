@@ -11,6 +11,7 @@ describe('onboarding form', () => {
   it('turns the year label into the number the backend stores', () => {
     expect(academicYearNumber('1st year')).toBe(1);
     expect(academicYearNumber('Postgraduate')).toBe(5);
+    expect(academicYearNumber('Passed out')).toBe(6);
     expect(academicYearNumber('')).toBeNull();
   });
 
