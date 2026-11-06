@@ -46,7 +46,7 @@ function ProfileHeader({ mentor }: { mentor: Mentor }) {
         </p>
         <div className="mt-2"><LinkList links={mentor.links} /></div>
         <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-          <RatingStars rating={mentor.rating} reviewCount={mentor.reviewCount} size="md" />
+
           <span className="text-ink-secondary">{mentor.experienceYears} years experience</span>
           <span className="font-semibold text-ink">{formatPrice(mentor.hourlyRate)} / hr</span>
         </div>

@@ -19,7 +19,7 @@ import { PhotoPicker } from './PhotoPicker';
 import { ProfileSection } from './ProfileSection';
 import { LanguagesSection, LinksFields, VisibilitySection, WorkPreferencesSection } from './ProfileSections';
 import { ProfileSummaryCard } from './ProfileSummaryCard';
-import { OpenToOpportunitiesBadge } from './ProfileView';
+
 import { useProfileForm } from './useProfileForm';
 
 interface StudentProfileFormProps {
@@ -35,7 +35,7 @@ export function StudentProfileForm({ profile, previewPath, saving, onSave }: Stu
   const { values, saved, set, errors, dirty, status, errorMessage, discard, handleSubmit } = useProfileForm(initial, validateStudentProfile, onSave);
 
   const progress = profileProgress([
-    { label: 'a photo', value: values.avatarUrl, section: 'photo' },
+
     { label: 'a headline', value: values.headline, section: 'intro' },
     { label: 'your location', value: values.location, section: 'intro' },
     { label: 'an about section', value: values.bio, section: 'about' },
@@ -44,7 +44,7 @@ export function StudentProfileForm({ profile, previewPath, saving, onSave }: Stu
     { label: 'experience', value: values.experience, section: 'experience' },
     { label: 'a project', value: values.projects, section: 'projects' },
     { label: 'skills', value: values.skills, section: 'skills' },
-    { label: 'languages', value: values.languages, section: 'languages' },
+
     { label: 'career interests', value: values.interests, section: 'interests' },
   ]);
 
@@ -62,7 +62,7 @@ export function StudentProfileForm({ profile, previewPath, saving, onSave }: Stu
             headline={saved.headline}
             location={saved.location}
             email={email}
-            badges={saved.workPreferences.openToOpportunities ? <OpenToOpportunitiesBadge /> : undefined}
+            badges={undefined}
             actions={
               <>
                 <Button asChild variant="secondary" size="sm" className="w-full">

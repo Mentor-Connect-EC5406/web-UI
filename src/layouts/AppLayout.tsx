@@ -48,6 +48,7 @@ export function AppLayout({ nav }: { nav: NavItem[] }) {
   const signOut = useSession((s) => s.signOut);
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
 
   // always inside RequireRole so a user is guaranteed here
   if (!user) return null;
@@ -58,66 +59,134 @@ export function AppLayout({ nav }: { nav: NavItem[] }) {
   }
 
   return (
-    <div className="flex min-h-screen bg-page">
-      {menuOpen && <div className="fixed inset-0 z-40 bg-ink/40 md:hidden" onClick={() => setMenuOpen(false)} aria-hidden />}
-
-      <aside
-        className={cn(
-          'fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-line bg-surface transition-transform duration-200 md:sticky md:top-0 md:h-screen md:translate-x-0',
-          menuOpen ? 'translate-x-0' : '-translate-x-full',
-        )}
-      >
-        <div className="flex h-16 items-center justify-between border-b border-line px-4">
-          <BrandLogo size="sm" />
-          <Button variant="ghost" size="icon" className="md:hidden" aria-label="Close menu" onClick={() => setMenuOpen(false)}>
-            <X />
+    <div className="flex min-h-screen flex-col bg-page">
+      {/* Top Navbar: spans across full width, logo always displayed */}
+      <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-line bg-surface px-4 md:px-6">
+        <div className="flex items-center gap-3">
+          {/* Mobile drawer toggle */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden text-ink-secondary hover:text-ink cursor-pointer"
+            aria-label="Open menu"
+            onClick={() => setMenuOpen(true)}
+          >
+            <Menu className="size-5" />
           </Button>
-        </div>
 
-        <nav aria-label="App" className="flex-1 space-y-1 overflow-y-auto p-3">
-          {nav.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end
-              onClick={() => setMenuOpen(false)}
-              className={({ isActive }) =>
-                cn(
-                  'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors',
-                  isActive ? 'bg-brand-soft text-ink' : 'text-ink-secondary hover:bg-surface-subtle hover:text-ink',
-                )
-              }
-            >
-              <item.icon className="size-4 shrink-0" aria-hidden />
-              {item.label}
-            </NavLink>
-          ))}
-        </nav>
-
-        <div className="border-t border-line p-3">
-          <Button variant="ghost" className="w-full justify-start text-ink-secondary" onClick={handleSignOut}>
-            <LogOut /> Sign out
+          {/* Desktop sidebar collapse toggle */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="hidden md:inline-flex text-ink-secondary hover:text-ink cursor-pointer"
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            onClick={() => setCollapsed(!collapsed)}
+          >
+            <Menu className="size-5" />
           </Button>
-        </div>
-      </aside>
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b border-line bg-surface px-4 md:justify-end md:px-6">
-          <Button variant="ghost" size="icon" className="md:hidden" aria-label="Open menu" onClick={() => setMenuOpen(true)}>
-            <Menu />
-          </Button>
-          <div className="flex items-center gap-3">
-            {user.role !== 'ADMIN' && <HeaderNotifications userId={user.id} role={user.role} />}
-            <div className="hidden text-right sm:block">
-              <p className="text-sm font-medium text-ink">{user.name}</p>
-              <p className="text-xs text-ink-muted">{roleLabel[user.role]}</p>
-            </div>
-            <Avatar name={user.name} src={user.avatarUrl} size="sm" />
+          {/* MentorConnect Logo - ALWAYS DISPLAYED */}
+          <div className="pl-1">
+            <BrandLogo size="sm" />
           </div>
-        </header>
+        </div>
 
-        <main className="mx-auto w-full max-w-7xl flex-1 p-4 md:p-6">
-          <PageOutlet />
+        {/* Right side user info & notifications */}
+        <div className="flex items-center gap-3">
+          {user.role !== 'ADMIN' && <HeaderNotifications userId={user.id} inbox={inboxPaths[user.role]} />}
+          <div className="hidden text-right sm:block">
+            <p className="text-sm font-medium text-ink">{user.name}</p>
+            <p className="text-xs text-ink-muted">{roleLabel[user.role]}</p>
+          </div>
+          <Avatar name={user.name} src={user.avatarUrl} size="sm" />
+        </div>
+      </header>
+
+      {/* Main body: Collapsible Sidebar + Content */}
+      <div className="flex flex-1">
+        {/* Mobile backdrop */}
+        {menuOpen && <div className="fixed inset-0 z-40 bg-ink/40 md:hidden" onClick={() => setMenuOpen(false)} aria-hidden />}
+
+        {/* Sidebar */}
+        <aside
+          className={cn(
+            'fixed inset-y-0 left-0 z-50 flex flex-col border-r border-line bg-surface transition-all duration-300 ease-in-out md:sticky md:top-16 md:z-0 md:h-[calc(100vh-4rem)]',
+            menuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
+            collapsed ? 'md:w-20' : 'md:w-64',
+            'w-64', // mobile drawer width
+          )}
+        >
+          {/* Mobile drawer header */}
+          <div className="flex h-16 items-center justify-between border-b border-line px-4 md:hidden">
+            <BrandLogo size="sm" />
+            <Button variant="ghost" size="icon" aria-label="Close menu" onClick={() => setMenuOpen(false)}>
+              <X />
+            </Button>
+          </div>
+
+          <nav aria-label="App" className="flex-1 space-y-1.5 overflow-y-auto p-3">
+            {nav.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end
+                onClick={() => setMenuOpen(false)}
+                title={collapsed ? item.label : undefined}
+                className={({ isActive }) =>
+                  cn(
+                    'group relative flex items-center rounded-xl text-sm font-medium transition-all duration-200',
+                    collapsed ? 'justify-center p-2.5' : 'gap-3 px-3.5 py-2.5 pl-4',
+                    isActive
+                      ? 'bg-neutral-200/80 font-semibold text-ink shadow-xs'
+                      : 'text-ink-secondary hover:bg-surface-subtle/80 hover:text-ink',
+                  )
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    {/* Active yellow indicator bar on left side */}
+                    {isActive && (
+                      <span
+                        className="absolute left-1 top-2 bottom-2 w-1.5 rounded-full bg-brand"
+                        aria-hidden
+                      />
+                    )}
+                    <item.icon
+                      className={cn(
+                        'size-5 shrink-0 transition-colors',
+                        isActive ? 'text-ink' : 'text-ink-secondary group-hover:text-ink',
+                      )}
+                      aria-hidden
+                    />
+                    {!collapsed && <span className="truncate">{item.label}</span>}
+                  </>
+                )}
+              </NavLink>
+            ))}
+          </nav>
+
+          <div className="border-t border-line p-3">
+            <Button
+              variant="ghost"
+              className={cn(
+                'w-full text-ink-secondary hover:text-ink cursor-pointer',
+                collapsed ? 'justify-center px-0' : 'justify-start gap-3',
+              )}
+              onClick={handleSignOut}
+              title={collapsed ? 'Sign out' : undefined}
+            >
+              <LogOut className="size-5 shrink-0" />
+              {!collapsed && <span>Sign out</span>}
+            </Button>
+          </div>
+        </aside>
+
+        {/* Content Area */}
+        <main className="min-w-0 flex-1 p-4 md:p-6">
+          <div className="mx-auto w-full max-w-7xl">
+            <PageOutlet />
+          </div>
         </main>
       </div>
     </div>
